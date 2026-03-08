@@ -170,7 +170,7 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
   <div class="hdr-right">
     <span id="syncBadge">â³ Loadingâ¦</span>
     <span id="resultCount"></span>
-    <button id="archiveBtn" onclick="openArchiveModal()">+ ARCHIVE UPLOAD</button>
+    <button id="archiveBtn" onclick="openArchiveModal()">+ ADD CAD</button>
   </div>
 </header>
 
@@ -286,8 +286,8 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
 <!-- ARCHIVE MODAL -->
 <div id="archiveOverlay" onclick="closeArchiveModal(event)">
   <div class="arc-modal">
-    <h2 id="arcModalTitle">ARCHIVE UPLOAD</h2>
-    <div class="arc-sub" id="arcModalSub">Add older CADs to the library with tags</div>
+    <h2 id="arcModalTitle">ADD CAD TO LIBRARY</h2>
+    <div class="arc-sub" id="arcModalSub">Drop CAD images — tag with capsule, season, category</div>
 
     <div id="arcDropSection" class="arc-section">
       <div class="arc-label">Images (select multiple)</div>
@@ -393,7 +393,7 @@ let filtered     = [];
 let capsules     = [];
 let sourceFilter = 'all';
 let seasonFilter = 'all';
-let isAdmin      = false;
+let isAdmin = true;
 let arcFiles     = [];
 let editingId    = null;
 let activeLbItem = null;
@@ -415,7 +415,7 @@ window.checkGate = function() {
   }
 };
 function applyAuth() {
-  isAdmin = localStorage.getItem('sac_lib_auth')==='admin';
+  isAdmin = true;
   document.getElementById('archiveBtn').style.display = isAdmin?'block':'none';
 }
 const sa = localStorage.getItem('sac_lib_auth');
@@ -604,7 +604,7 @@ function resetArcModal(){
   document.querySelectorAll('.atag').forEach(el=>el.classList.remove('active'));
 }
 window.openArchiveModal=function(){
-  if (!isAdmin) return;
+  // admin check removed
   resetArcModal();
   document.getElementById('arcModalTitle').textContent='ARCHIVE UPLOAD';
   document.getElementById('arcModalSub').textContent='Add older CADs to the library with tags';
@@ -623,7 +623,7 @@ window.editCurrentArchive=function(){
   editArchiveItem(activeLbItem.id);
 };
 window.editArchiveItem=function(id){
-  if (!isAdmin) return;
+  // admin check removed
   const item=archiveItems.find(a=>a.id===id); if (!item) return;
   resetArcModal();
   editingId=id;
