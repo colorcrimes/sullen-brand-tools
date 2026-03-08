@@ -153,7 +153,7 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
 <div id="gate">
   <div class="g-logo">SAC</div>
   <div class="g-title">CAD LIBRARY</div>
-  <div class="g-sub">Sullen Art Collective — Asset Archive</div>
+  <div class="g-sub">Sullen Art Collective â Asset Archive</div>
   <div class="g-row">
     <input type="password" id="gateInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkGate()">
     <button onclick="checkGate()">ENTER</button>
@@ -168,7 +168,7 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
     <span class="logo-sub">CAD Library</span>
   </div>
   <div class="hdr-right">
-    <span id="syncBadge">⟳ Loading…</span>
+    <span id="syncBadge">â³ Loadingâ¦</span>
     <span id="resultCount"></span>
     <button id="archiveBtn" onclick="openArchiveModal()">+ ARCHIVE UPLOAD</button>
   </div>
@@ -177,8 +177,8 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
 <!-- SEARCH + FILTERS -->
 <div class="search-wrap">
   <div class="search-box">
-    <span style="color:#333;font-size:13px">🔍</span>
-    <input type="text" id="searchInput" placeholder="Search by name, capsule, tags…" oninput="applyFilters()">
+    <span style="color:#333;font-size:13px">ð</span>
+    <input type="text" id="searchInput" placeholder="Search by name, capsule, tagsâ¦" oninput="applyFilters()">
   </div>
   <div class="filters">
     <span class="filter-label">Source:</span>
@@ -230,9 +230,9 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
 
 <!-- GRID -->
 <div id="gridWrap">
-  <div id="loadingState"><div class="ls-title">LOADING ASSETS…</div></div>
+  <div id="loadingState"><div class="ls-title">LOADING ASSETSâ¦</div></div>
   <div id="emptyState">
-    <div class="es-icon">🗂</div>
+    <div class="es-icon">ð</div>
     <div class="es-title">NO RESULTS</div>
     <div class="es-sub">Try adjusting your search or filters</div>
   </div>
@@ -242,7 +242,7 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
 <!-- LIGHTBOX -->
 <div id="lightbox" onclick="closeLightbox(event)">
   <div class="lb-inner">
-    <button class="lb-close" onclick="closeLightbox()">✕</button>
+    <button class="lb-close" onclick="closeLightbox()">â</button>
     <div class="lb-img-wrap"><img id="lbImg" src="" alt=""></div>
     <div class="lb-info">
       <div class="lb-name" id="lbName"></div>
@@ -276,8 +276,8 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
         <div class="lb-label">Tags</div>
         <div id="lbTags" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px"></div>
       </div>
-      <button class="lb-dl"   id="lbDlBtn">↓ DOWNLOAD</button>
-      <button class="lb-edit" id="lbEditBtn" onclick="editCurrentArchive()">✏ EDIT TAGS</button>
+      <button class="lb-dl"   id="lbDlBtn">â DOWNLOAD</button>
+      <button class="lb-edit" id="lbEditBtn" onclick="editCurrentArchive()">â EDIT TAGS</button>
       <button class="lb-del"  id="lbDelBtn"  onclick="deleteCurrentArchive()">Delete from archive</button>
     </div>
   </div>
@@ -293,9 +293,9 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
       <div class="arc-label">Images (select multiple)</div>
       <div class="drop-zone" id="dropZone">
         <input type="file" id="arcFileInput" accept="image/*" multiple onchange="onArcFiles(event)">
-        <div class="dz-icon">🖼</div>
+        <div class="dz-icon">ð¼</div>
         <div class="dz-title">Drop images here or click to browse</div>
-        <div class="dz-sub">JPG, PNG — compressed automatically</div>
+        <div class="dz-sub">JPG, PNG â compressed automatically</div>
       </div>
       <div id="arcPreviews"></div>
     </div>
@@ -326,7 +326,7 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
 
     <div class="arc-section">
       <div class="arc-label">Notes (optional)</div>
-      <input type="text" class="arc-input" id="arcNotes" placeholder="Capsule name, collection, artist…">
+      <input type="text" class="arc-input" id="arcNotes" placeholder="Capsule name, collection, artistâ¦">
     </div>
 
     <div class="arc-section">
@@ -402,7 +402,7 @@ const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const SMAP = {0:'spring',1:'spring',2:'spring',3:'spring',4:'summer',5:'summer',6:'summer',7:'summer',8:'fall',9:'fall',10:'holiday',11:'holiday'};
 const SCOL = {spring:'#f5c518',summer:'#2db84b',fall:'#e65c00',holiday:'#1565c0',archive:'#9c27b0'};
 
-// ── AUTH ──
+// ââ AUTH ââ
 window.checkGate = function() {
   const v = document.getElementById('gateInput').value.trim().toLowerCase();
   if (v==='sullen calendar'||v==='sullen admin') {
@@ -421,14 +421,14 @@ function applyAuth() {
 const sa = localStorage.getItem('sac_lib_auth');
 if (sa) { document.getElementById('gate').style.display='none'; applyAuth(); }
 
-// ── SYNC BADGE ──
+// ââ SYNC BADGE ââ
 function setSyncBadge(s) {
   const el=document.getElementById('syncBadge');
-  el.textContent={loading:'⟳ Loading…',live:'● Live',error:'✗ Offline'}[s]||s;
+  el.textContent={loading:'â³ Loadingâ¦',live:'â Live',error:'â Offline'}[s]||s;
   el.style.color=s==='live'?'#2db84b':s==='error'?'#c8102e':'#555';
 }
 
-// ── LOAD CALENDAR DATA ──
+// ââ LOAD CALENDAR DATA ââ
 setSyncBadge('loading');
 onSnapshot(doc(db,'calendar','__meta'), snap=>{
   if (snap.exists()) {
@@ -469,7 +469,7 @@ function loadYear(y) {
   });
 }
 
-// ── LOAD ARCHIVE DATA ──
+// ââ LOAD ARCHIVE DATA ââ
 onSnapshot(doc(db,'archive','__index'), snap=>{
   archiveItems=[];
   if (snap.exists()) {
@@ -488,7 +488,7 @@ function buildCapFilter() {
   });
 }
 
-// ── FILTERS ──
+// ââ FILTERS ââ
 window.setSourceFilter=function(s,el){document.querySelectorAll('[id^="fs-"]').forEach(e=>e.classList.remove('active'));el.classList.add('active');sourceFilter=s;applyFilters();};
 window.setSeasonFilter=function(s,el){document.querySelectorAll('[id^="fss-"]').forEach(e=>e.classList.remove('active'));el.classList.add('active');seasonFilter=s;applyFilters();};
 window.applyFilters=function(){
@@ -513,7 +513,7 @@ window.applyFilters=function(){
   renderGrid();
 };
 
-// ── RENDER ──
+// ââ RENDER ââ
 function renderGrid(){
   const grid=document.getElementById('grid');
   document.getElementById('loadingState').style.display='none';
@@ -533,31 +533,31 @@ function renderGrid(){
           <div class="cap-dot" style="background:${cc(item)}"></div>
           <div class="cap-name">${item.source==='archive'?(item.notes||'Archive'):(item.cap?item.cap.name:item.capId)}</div>
         </div>
-        <div class="card-date">${ds(item.date)}${item.year?' · '+item.year:''}</div>
+        <div class="card-date">${ds(item.date)}${item.year?' Â· '+item.year:''}</div>
         ${item.tags&&item.tags.length?`<div class="card-tags">${item.tags.slice(0,3).map(t=>`<span class="tag-pill">${t}</span>`).join('')}</div>`:''}
       </div>
       <div class="card-overlay">
         <button onclick="event.stopPropagation();openLightbox(${i})">VIEW</button>
-        <button class="dl" onclick="event.stopPropagation();downloadCad('${item.src}','${item.name}')">↓</button>
-        ${item.source==='archive'&&isAdmin?`<button class="ed" onclick="event.stopPropagation();editArchiveItem('${item.id}')">✏</button>`:''}
+        <button class="dl" onclick="event.stopPropagation();downloadCad('${item.src}','${item.name}')">â</button>
+        ${item.source==='archive'&&isAdmin?`<button class="ed" onclick="event.stopPropagation();editArchiveItem('${item.id}')">â</button>`:''}
       </div>
     </div>
   `).join('');
 }
 
-// ── LIGHTBOX ──
+// ââ LIGHTBOX ââ
 window.openLightbox=function(i){
   const item=filtered[i]; if (!item) return;
   activeLbItem=item;
   const cc=item.cap?item.cap.color:(item.source==='archive'?'#9c27b0':'#555');
   const sc=SCOL[item.season]||'#555';
   const ds=item.date&&item.date.getFullYear&&item.date.getFullYear()>2000
-    ?`${DOW[item.date.getDay()]} ${item.date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}` :'—';
+    ?`${DOW[item.date.getDay()]} ${item.date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}` :'â';
   document.getElementById('lbImg').src=item.src;
   document.getElementById('lbName').textContent=item.name;
-  document.getElementById('lbSource').innerHTML=item.source==='archive'?`<span style="color:#ce93d8">● Archive</span>`:`<span style="color:#2db84b">● Calendar</span>`;
+  document.getElementById('lbSource').innerHTML=item.source==='archive'?`<span style="color:#ce93d8">â Archive</span>`:`<span style="color:#2db84b">â Calendar</span>`;
   document.getElementById('lbCapDot').style.background=cc;
-  document.getElementById('lbCap').textContent=item.cap?item.cap.name:(item.capId||'—');
+  document.getElementById('lbCap').textContent=item.cap?item.cap.name:(item.capId||'â');
   document.getElementById('lbCapRow').style.display=item.source==='live'?'block':'none';
   document.getElementById('lbDate').textContent=ds;
   document.getElementById('lbDateRow').style.display=item.source==='live'?'block':'none';
@@ -591,7 +591,7 @@ window.downloadCad=function(src,name){
   const a=document.createElement('a');a.href=src;a.download=(name||'cad').replace(/\s+/g,'-').toLowerCase()+'.jpg';a.target='_blank';a.click();
 };
 
-// ── ARCHIVE MODAL ──
+// ââ ARCHIVE MODAL ââ
 function resetArcModal(){
   arcFiles=[]; editingId=null;
   document.getElementById('arcPreviews').innerHTML='';
@@ -654,7 +654,7 @@ window.deleteCurrentArchive=async function(){
 window.toggleArcTag=function(el){el.classList.toggle('active');};
 function getArcTags(){return[...document.querySelectorAll('.atag.active')].map(el=>el.dataset.tag);}
 
-// ── FILE HANDLING ──
+// ââ FILE HANDLING ââ
 window.onArcFiles=function(e){
   [...e.target.files].forEach(f=>{
     const r=new FileReader();
@@ -669,7 +669,7 @@ window.onArcFiles=function(e){
 };
 function renderArcPreviews(){
   document.getElementById('arcPreviews').innerHTML=arcFiles.map((f,i)=>
-    `<div class="arc-prev"><img src="${f.compressed}"><button class="rm" onclick="removeArcFile(${i})">✕</button></div>`
+    `<div class="arc-prev"><img src="${f.compressed}"><button class="rm" onclick="removeArcFile(${i})">â</button></div>`
   ).join('');
 }
 window.removeArcFile=function(i){arcFiles.splice(i,1);renderArcPreviews();};
@@ -696,7 +696,7 @@ function dataUrlToBlob(dataUrl){
   return new Blob([arr],{type:mime});
 }
 
-// ── SAVE ARCHIVE ──
+// ââ SAVE ARCHIVE ââ
 window.saveArchive=async function(){
   const btn=document.getElementById('arcSaveBtn');
   const status=document.getElementById('arcStatus');
@@ -709,14 +709,14 @@ window.saveArchive=async function(){
 
   // EDIT
   if (editingId) {
-    btn.disabled=true; btn.textContent='Saving…';
+    btn.disabled=true; btn.textContent='Savingâ¦';
     try {
       const snap=await getDoc(idxDoc);
       const items=(snap.exists()?(snap.data().items||[]):[]).map(i=>
         i.id===editingId?{...i,name:name||i.name,season,year,notes,tags}:i
       );
       await setDoc(idxDoc,{items});
-      status.textContent='✓ Saved';
+      status.textContent='â Saved';
       setTimeout(()=>document.getElementById('archiveOverlay').classList.remove('open'),800);
     } catch(err){status.textContent='Error: '+err.message;}
     btn.disabled=false; btn.textContent='SAVE CHANGES';
@@ -732,7 +732,7 @@ window.saveArchive=async function(){
     const f=arcFiles[idx];
     const id='arc_'+Date.now()+'_'+idx;
     const iname=arcFiles.length===1?(name||f.name):(name?`${name} ${idx+1}`:f.name);
-    status.textContent=`Uploading ${idx+1} of ${arcFiles.length}…`;
+    status.textContent=`Uploading ${idx+1} of ${arcFiles.length}â¦`;
     btn.textContent=`${idx+1}/${arcFiles.length}`;
     try {
       const blob=dataUrlToBlob(f.compressed);
@@ -744,7 +744,7 @@ window.saveArchive=async function(){
   }
   if (newItems.length){
     await setDoc(idxDoc,{items:[...existing,...newItems]});
-    status.textContent=`✓ ${newItems.length} item${newItems.length>1?'s':''} added`;
+    status.textContent=`â ${newItems.length} item${newItems.length>1?'s':''} added`;
     setTimeout(()=>document.getElementById('archiveOverlay').classList.remove('open'),1000);
   }
   btn.disabled=false; btn.textContent='UPLOAD';
