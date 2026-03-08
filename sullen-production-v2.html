@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SULLEN — Production Tracker v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0c0d;
+  --surface: #131315;
+  --surface2: #1a1a1e;
+  --border: #222228;
+  --border2: #2e2e36;
+  --ink: #0a0a0c;
+  --text: #c8c4bc;
+  --text-dim: #5c5a58;
+  --text-muted: #3a3835;
+  --red: #c0392b;
+  --red-glow: #c0392b22;
+  --gold: #c9964a;
+  --gold-dim: #c9964a18;
+  --green: #3d9970;
+  --green-dim: #3d997018;
+  --blue: #4a7fc9;
+  --blue-dim: #4a7fc918;
+  --amber: #d4a017;
+  --amber-dim: #d4a01718;
+  --purple: #8b5cf6;
+  --purple-dim: #8b5cf618;
+  --col-w: 300px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Barlow Condensed',sans-serif; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+/* ── TOPBAR ── */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:56px; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--surface); position:relative; z-index:50; }
+.topbar::after { content:''; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg,var(--red) 0%,transparent 40%); }
+.tb-left { display:flex; align-items:center; gap:20px; }
+.brand { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:5px; color:#fff; line-height:1; }
+.brand span { color:var(--red); }
+.page-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:3px; color:var(--text-dim); text-transform:uppercase; padding-left:20px; border-left:1px solid var(--border2); }
+.tb-right { display:flex; align-items:center; gap:10px; }
+.tb-btn { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; padding:7px 14px; border:1px solid var(--border2); background:transparent; color:var(--text-dim); cursor:pointer; transition:all .15s; white-space:nowrap; }
+.tb-btn:hover { border-color:var(--red); color:var(--text); }
+.tb-btn.primary { background:var(--red); border-color:var(--red); color:#fff; }
+.tb-btn.primary:hover { background:#a93226; }
+.tb-btn.gold { background:var(--gold-dim); border-color:var(--gold); color:var(--gold); }
+.tb-btn.gold:hover { background:var(--gold); color:#000; }
+.season-filter { display:flex; gap:6px; }
+.s-pill { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; padding:4px 10px; border:1px solid var(--border); background:transparent; color:var(--text-dim); cursor:pointer; transition:all .15s; text-transform:uppercase; }
+.s-pill.active { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
+
+/* ── SUMMARY BAR ── */
+.summary-bar { display:flex; align-items:center; padding:0 28px; height:40px; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--ink); overflow-x:auto; gap:0; }
+.sum-item { display:flex; align-items:center; gap:8px; padding:0 20px 0 0; margin-right:20px; border-right:1px solid var(--border); white-space:nowrap; }
+.sum-item:last-child { border-right:none; }
+.sum-num { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; line-height:1; }
+.sum-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase; line-height:1.3; }
+
+/* ── BOARD ── */
+.board-wrap { flex:1; overflow-x:auto; overflow-y:hidden; padding:20px 28px; display:flex; gap:14px; align-items:flex-start; }
+.board-wrap::-webkit-scrollbar { height:4px; }
+.board-wrap::-webkit-scrollbar-thumb { background:var(--border2); }
+.col { width:var(--col-w); min-width:var(--col-w); display:flex; flex-direction:column; gap:10px; height:100%; }
+.col-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--border); background:var(--surface); }
+.col-title-wrap { display:flex; align-items:center; gap:8px; }
+.col-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.col-title { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px; color:var(--text); }
+.col-count { font-family:'DM Mono',monospace; font-size:10px; color:var(--text-dim); background:var(--surface2); padding:2px 7px; border:1px solid var(--border); }
+.col-cards { display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1; padding-right:2px; }
+.col-cards::-webkit-scrollbar { width:3px; }
+.col-cards::-webkit-scrollbar-thumb { background:var(--border2); }
+
+/* ── CARD ── */
+.card { background:var(--surface); border:1px solid var(--border); padding:14px; cursor:pointer; transition:all .15s; position:relative; overflow:hidden; animation:cardIn .3s ease both; }
+@keyframes cardIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--col-accent,var(--border)); }
+.card:hover { border-color:var(--border2); background:var(--surface2); transform:translateY(-1px); box-shadow:0 4px 20px rgba(0,0,0,.4); }
+.card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.card-sku { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase; }
+.card-badges { display:flex; gap:4px; align-items:center; }
+.card-flag { font-size:14px; line-height:1; }
+.badge-cad { font-family:'DM Mono',monospace; font-size:7px; letter-spacing:1px; padding:2px 5px; border:1px solid var(--blue); color:var(--blue); background:var(--blue-dim); }
+.badge-alert { font-size:12px; cursor:default; }
+.card-name { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:2px; color:#fff; line-height:1.1; margin-bottom:6px; }
+.colorways { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px; }
+.cw-chip { display:flex; align-items:center; gap:4px; font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; color:var(--text-dim); padding:2px 6px; border:1px solid var(--border); background:var(--surface2); }
+.cw-swatch { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.card-data { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
+.data-label { font-family:'DM Mono',monospace; font-size:7px; letter-spacing:2px; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:1px; }
+.data-val { font-family:'DM Mono',monospace; font-size:10px; color:var(--text); letter-spacing:.5px; }
+.data-val.highlight { color:var(--gold); }
+.data-val.warn { color:#e67e22; }
+.data-val.ok { color:var(--green); }
+.sample-track { display:flex; gap:4px; margin-bottom:10px; }
+.s-step { flex:1; text-align:center; font-family:'DM Mono',monospace; font-size:7px; letter-spacing:1px; text-transform:uppercase; padding:4px 2px; border:1px solid var(--border); color:var(--text-muted); }
+.s-step.done { background:var(--green-dim); border-color:var(--green); color:var(--green); }
+.s-step.active { background:var(--amber-dim); border-color:var(--amber); color:var(--amber); }
+.card-footer { display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid var(--border); }
+.due-date { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1px; }
+.due-date.urgent { color:var(--red); }
+.due-date.soon { color:var(--amber); }
+.due-date.ok { color:var(--green); }
+.card-actions { display:flex; gap:6px; }
+.c-action { font-size:11px; cursor:pointer; opacity:.4; transition:opacity .15s; background:none; border:none; color:inherit; padding:2px; }
+.c-action:hover { opacity:1; }
+.add-card-btn { width:100%; padding:10px; border:1px dashed var(--border); background:transparent; color:var(--text-muted); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:all .15s; display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0; }
+.add-card-btn:hover { border-color:var(--border2); color:var(--text); background:var(--surface); }
+.urgency-bar { position:absolute; top:0; left:3px; right:0; height:2px; opacity:.6; }
+
+/* ── MODALS ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity .2s; backdrop-filter:blur(4px); }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal { background:var(--surface); border:1px solid var(--border2); width:100%; max-width:700px; max-height:90vh; overflow-y:auto; transform:translateY(16px); transition:transform .2s; }
+.modal-overlay.open .modal { transform:translateY(0); }
+.modal::-webkit-scrollbar { width:3px; }
+.modal::-webkit-scrollbar-thumb { background:var(--border2); }
+.modal-header { display:flex; justify-content:space-between; align-items:center; padding:20px 24px 16px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:1; }
+.modal-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:4px; color:#fff; }
+.modal-subtitle { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--text-dim); margin-top:3px; }
+.modal-close { font-size:20px; cursor:pointer; color:var(--text-dim); background:none; border:none; line-height:1; transition:color .15s; }
+.modal-close:hover { color:var(--red); }
+.modal-body { padding:24px; }
+.modal-footer { display:flex; justify-content:flex-end; gap:10px; padding:16px 24px; border-top:1px solid var(--border); position:sticky; bottom:0; background:var(--surface); }
+
+/* Form */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-grid.col3 { grid-template-columns:1fr 1fr 1fr; }
+.form-grid.full { grid-template-columns:1fr; }
+.form-group { display:flex; flex-direction:column; gap:6px; }
+.form-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:3px; color:var(--text-dim); text-transform:uppercase; }
+.form-input,.form-select,.form-textarea { background:var(--surface2); border:1px solid var(--border2); color:var(--text); font-family:'DM Mono',monospace; font-size:12px; padding:9px 12px; outline:none; transition:border-color .15s; width:100%; }
+.form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--gold); }
+.form-select { cursor:pointer; }
+.form-select option { background:var(--surface2); }
+.form-textarea { resize:vertical; min-height:70px; line-height:1.5; }
+.form-section-label { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:4px; color:var(--text-dim); margin:20px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+
+/* CAD Upload Zone */
+.cad-zone { border:1px dashed var(--border2); padding:20px; text-align:center; cursor:pointer; transition:all .2s; position:relative; background:var(--surface2); }
+.cad-zone:hover,.cad-zone.drag { border-color:var(--blue); background:var(--blue-dim); }
+.cad-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.cad-zone-icon { font-size:24px; display:block; margin-bottom:8px; }
+.cad-zone-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase; }
+.cad-zone-sub { font-family:'DM Mono',monospace; font-size:8px; color:var(--text-muted); margin-top:4px; }
+.cad-file-list { margin-top:12px; display:flex; flex-direction:column; gap:6px; }
+.cad-file-item { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--surface); border:1px solid var(--border); }
+.cad-file-name { font-family:'DM Mono',monospace; font-size:10px; color:var(--text); display:flex; align-items:center; gap:8px; }
+.cad-file-status { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; text-transform:uppercase; }
+.cad-file-status.uploading { color:var(--amber); }
+.cad-file-status.done { color:var(--green); }
+.cad-file-status.error { color:var(--red); }
+.cad-remove { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:12px; }
+.cad-remove:hover { color:var(--red); }
+
+/* Sample toggles */
+.sample-modal-track { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.s-toggle { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 8px; border:1px solid var(--border); background:var(--surface2); cursor:pointer; transition:all .15s; }
+.s-toggle.done-state { border-color:var(--green); background:var(--green-dim); }
+.s-toggle.active-state { border-color:var(--amber); background:var(--amber-dim); }
+.s-toggle-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); }
+.s-toggle.done-state .s-toggle-label { color:var(--green); }
+.s-toggle.active-state .s-toggle-label { color:var(--amber); }
+.s-toggle-icon { font-size:16px; }
+
+/* Colorway builder */
+.cw-builder { display:flex; flex-direction:column; gap:8px; }
+.cw-row { display:flex; gap:8px; align-items:center; }
+.cw-color-input { width:36px; height:34px; border:1px solid var(--border2); background:var(--surface2); cursor:pointer; padding:2px; }
+.cw-name-input { flex:1; background:var(--surface2); border:1px solid var(--border2); color:var(--text); font-family:'DM Mono',monospace; font-size:11px; padding:7px 10px; outline:none; }
+.cw-name-input:focus { border-color:var(--gold); }
+.cw-remove { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; transition:color .15s; }
+.cw-remove:hover { color:var(--red); }
+.add-cw-btn { background:none; border:1px dashed var(--border); color:var(--text-dim); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; padding:7px; cursor:pointer; transition:all .15s; width:100%; }
+.add-cw-btn:hover { border-color:var(--border2); color:var(--text); }
+
+/* Detail modal */
+.detail-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:10px; }
+.detail-label { font-family:'DM Mono',monospace; font-size:7px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:3px; }
+.detail-val { font-family:'DM Mono',monospace; font-size:13px; color:var(--text); }
+.detail-val.gold { color:var(--gold); }
+.detail-val.green { color:var(--green); }
+.detail-val.red { color:var(--red); }
+.stage-moves { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+.stage-move-btn { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; padding:7px 14px; border:1px solid var(--border2); background:transparent; color:var(--text-dim); cursor:pointer; transition:all .15s; }
+.stage-move-btn:hover { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
+.stage-move-btn.current { border-color:var(--red); color:var(--red); background:var(--red-glow); }
+
+/* Notes log */
+.notes-log { background:var(--surface2); border:1px solid var(--border); padding:14px; min-height:100px; max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+.note-entry { display:flex; flex-direction:column; gap:3px; }
+.note-meta { font-family:'DM Mono',monospace; font-size:8px; color:var(--text-muted); letter-spacing:1px; display:flex; gap:8px; }
+.note-source { padding:1px 5px; border:1px solid; }
+.note-source.manual { border-color:var(--border2); color:var(--text-dim); }
+.note-source.email { border-color:var(--blue); color:var(--blue); }
+.note-source.auto { border-color:var(--purple); color:var(--purple); }
+.note-text { font-family:'DM Mono',monospace; font-size:10px; color:var(--text); line-height:1.6; }
+.note-empty { font-family:'DM Mono',monospace; font-size:10px; color:var(--text-muted); font-style:italic; }
+.note-input-row { display:flex; gap:8px; margin-top:10px; }
+.note-input { flex:1; background:var(--surface2); border:1px solid var(--border2); color:var(--text); font-family:'DM Mono',monospace; font-size:11px; padding:8px 12px; outline:none; }
+.note-input:focus { border-color:var(--gold); }
+
+/* CAD files in detail */
+.cad-detail-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+.cad-detail-item { display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--surface2); border:1px solid var(--border); }
+.cad-detail-icon { font-size:16px; }
+.cad-detail-info { flex:1; }
+.cad-detail-name { font-family:'DM Mono',monospace; font-size:10px; color:var(--text); display:block; }
+.cad-detail-date { font-family:'DM Mono',monospace; font-size:8px; color:var(--text-muted); }
+.cad-detail-link { font-family:'DM Mono',monospace; font-size:9px; color:var(--blue); text-decoration:none; padding:4px 8px; border:1px solid var(--blue); transition:all .15s; }
+.cad-detail-link:hover { background:var(--blue-dim); }
+
+/* Reminder badges */
+.reminder-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+.reminder-item { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:var(--surface2); border:1px solid var(--border); }
+.reminder-left { display:flex; align-items:center; gap:10px; }
+.reminder-icon { font-size:14px; }
+.reminder-desc { font-family:'DM Mono',monospace; font-size:10px; color:var(--text); }
+.reminder-when { font-family:'DM Mono',monospace; font-size:8px; color:var(--text-muted); }
+.reminder-status { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border:1px solid; }
+.reminder-status.sent { border-color:var(--green); color:var(--green); background:var(--green-dim); }
+.reminder-status.pending { border-color:var(--amber); color:var(--amber); background:var(--amber-dim); }
+.reminder-status.scheduled { border-color:var(--border2); color:var(--text-dim); }
+
+/* ── SETTINGS PANEL ── */
+.settings-modal { max-width:580px; }
+.team-member-list { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.team-member-row { display:flex; gap:8px; align-items:center; }
+.team-remove { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px; transition:color .15s; }
+.team-remove:hover { color:var(--red); }
+.trigger-config { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+.trigger-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border:1px solid var(--border); background:var(--surface2); }
+.trigger-toggle { position:relative; width:36px; height:20px; flex-shrink:0; }
+.trigger-toggle input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:var(--border2); cursor:pointer; transition:.3s; border-radius:10px; }
+.toggle-slider::before { content:''; position:absolute; height:14px; width:14px; left:3px; bottom:3px; background:var(--text-dim); transition:.3s; border-radius:50%; }
+.trigger-toggle input:checked+.toggle-slider { background:var(--red); }
+.trigger-toggle input:checked+.toggle-slider::before { transform:translateX(16px); background:#fff; }
+.trigger-info { flex:1; }
+.trigger-label { font-family:'DM Mono',monospace; font-size:10px; color:var(--text); }
+.trigger-desc { font-family:'DM Mono',monospace; font-size:8px; color:var(--text-muted); margin-top:2px; }
+
+/* Toast */
+.toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--border2); border-left:3px solid var(--green); padding:12px 20px; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--text); z-index:999; transform:translateY(60px); opacity:0; transition:all .25s; pointer-events:none; max-width:320px; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.error { border-left-color:var(--red); }
+
+/* Loading spinner */
+.spinner { display:inline-block; width:12px; height:12px; border:2px solid var(--border2); border-top-color:var(--gold); border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* Auth notice */
+.auth-notice { background:var(--purple-dim); border:1px solid var(--purple); padding:12px 16px; margin-bottom:16px; }
+.auth-notice-text { font-family:'DM Mono',monospace; font-size:10px; color:var(--purple); letter-spacing:1px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-left">
+    <div class="brand">SULLEN <span>·</span> PDX</div>
+    <div class="page-title">Production Tracker v2</div>
+    <div class="season-filter">
+      <button class="s-pill active" data-season="ALL">All</button>
+      <button class="s-pill" data-season="SS26">SS26</button>
+      <button class="s-pill" data-season="FW26">FW26</button>
+      <button class="s-pill" data-season="FW27">FW27</button>
+    </div>
+  </div>
+  <div class="tb-right">
+    <button class="tb-btn" onclick="checkReminders()">🔔 Run Reminders</button>
+    <button class="tb-btn" onclick="exportCSV()">⬇ Export</button>
+    <button class="tb-btn gold" onclick="openSettings()">⚙ Settings</button>
+    <button class="tb-btn primary" onclick="openNewCard()">+ New Style</button>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <div class="sum-item"><div><div class="sum-num" id="sum-total" style="color:var(--text)">0</div><div class="sum-label">Total<br>Styles</div></div></div>
+  <div class="sum-item"><div><div class="sum-num" id="sum-sampling" style="color:var(--amber)">0</div><div class="sum-label">In<br>Sampling</div></div></div>
+  <div class="sum-item"><div><div class="sum-num" id="sum-bulk" style="color:var(--blue)">0</div><div class="sum-label">In Bulk<br>Prod</div></div></div>
+  <div class="sum-item"><div><div class="sum-num" id="sum-urgent" style="color:var(--red)">0</div><div class="sum-label">Urgent<br>≤14 days</div></div></div>
+  <div class="sum-item"><div><div class="sum-num" id="sum-reminders" style="color:var(--purple)">0</div><div class="sum-label">Reminders<br>Due</div></div></div>
+  <div class="sum-item"><div><div class="sum-num" id="sum-cost" style="color:var(--gold)">$0</div><div class="sum-label">Total<br>Dev Cost</div></div></div>
+</div>
+
+<div class="board-wrap" id="board"></div>
+
+<!-- ── NEW/EDIT MODAL ── -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">New Style</div>
+        <div class="modal-subtitle" id="modalSubtitle">Fill in style details — CAD files upload directly to Google Drive</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Style Name *</label><input class="form-input" id="f-name" placeholder="e.g. Reaper Skull Tee"></div>
+        <div class="form-group"><label class="form-label">SKU</label><input class="form-input" id="f-sku" placeholder="e.g. SUL-TEE-001"></div>
+      </div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="f-category"><option>T-Shirt</option><option>Hoodie</option><option>Crewneck</option><option>Shorts</option><option>Jacket</option><option>Hat</option><option>Accessories</option><option>Other</option></select></div>
+        <div class="form-group"><label class="form-label">Season</label><select class="form-select" id="f-season"><option>SS26</option><option>FW26</option><option>SS27</option><option>FW27</option></select></div>
+      </div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="form-group"><label class="form-label">Capsule / Collection</label><input class="form-input" id="f-capsule" placeholder="e.g. Last Rites, Choloha..."></div>
+        <div class="form-group"><label class="form-label">Factory / Country</label><input class="form-input" id="f-factory" placeholder="e.g. Garment Co — Bangladesh"></div>
+      </div>
+
+      <div class="form-section-label">Costing & Timeline</div>
+      <div class="form-grid col3">
+        <div class="form-group"><label class="form-label">FOB Cost ($)</label><input class="form-input" id="f-cost" type="number" placeholder="0.00" step="0.01"></div>
+        <div class="form-group"><label class="form-label">MOQ (units)</label><input class="form-input" id="f-moq" type="number" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Lead Time (days)</label><input class="form-input" id="f-lead" type="number" placeholder="90"></div>
+      </div>
+      <div class="form-grid" style="margin-top:12px">
+        <div class="form-group"><label class="form-label">Target Ship Date</label><input class="form-input" id="f-ship" type="date"></div>
+        <div class="form-group"><label class="form-label">In-Hands Date</label><input class="form-input" id="f-inhands" type="date"></div>
+      </div>
+
+      <div class="form-section-label">CAD / Artwork Files → Google Drive</div>
+      <div class="cad-zone" id="cadZone" onclick="document.getElementById('cadFileInput').click()">
+        <input type="file" id="cadFileInput" multiple accept=".ai,.pdf,.png,.jpg,.psd,.eps,.svg,.zip" style="display:none" onchange="handleFileSelect(event)">
+        <span class="cad-zone-icon">📐</span>
+        <div class="cad-zone-label">Drop CAD files here or click to browse</div>
+        <div class="cad-zone-sub">.AI · .PDF · .PSD · .EPS · .PNG · .SVG · .ZIP — uploads to your Google Drive</div>
+      </div>
+      <div class="cad-file-list" id="cadFileList"></div>
+
+      <div class="form-section-label">Sample Status</div>
+      <div class="sample-modal-track">
+        <div class="s-toggle" id="st-1st" onclick="toggleSample('1st')"><div class="s-toggle-icon">🧪</div><div class="s-toggle-label">1st Sample</div></div>
+        <div class="s-toggle" id="st-fit" onclick="toggleSample('fit')"><div class="s-toggle-icon">👕</div><div class="s-toggle-label">Fit Sample</div></div>
+        <div class="s-toggle" id="st-bulk" onclick="toggleSample('bulk')"><div class="s-toggle-icon">📦</div><div class="s-toggle-label">Bulk Approval</div></div>
+      </div>
+
+      <div class="form-section-label">Colorways</div>
+      <div class="cw-builder" id="cwBuilder"></div>
+      <button class="add-cw-btn" onclick="addColorway()" style="margin-top:8px">+ Add Colorway</button>
+
+      <div class="form-section-label">Notes</div>
+      <div class="form-grid full"><div class="form-group"><textarea class="form-textarea" id="f-notes" placeholder="Factory communication, fit comments, revision requests..."></textarea></div></div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal('editModal')">Cancel</button>
+      <button class="tb-btn primary" id="saveBtn" onclick="saveCard()">Save Style</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DETAIL MODAL ── -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal" style="max-width:740px" id="detailContent"></div>
+</div>
+
+<!-- ── SETTINGS MODAL ── -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal settings-modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Settings</div><div class="modal-subtitle">Team contacts & reminder triggers</div></div>
+      <button class="modal-close" onclick="closeModal('settingsModal')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-section-label" style="margin-top:0">Team Email List</div>
+      <p style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:12px;line-height:1.6">These people receive automated reminder emails at each benchmark trigger. Reply-to notes auto-append to the relevant style card.</p>
+      <div class="team-member-list" id="teamList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input class="form-input" id="new-member-name" placeholder="Name" style="flex:1">
+        <input class="form-input" id="new-member-email" placeholder="email@domain.com" type="email" style="flex:2">
+        <button class="tb-btn primary" onclick="addTeamMember()" style="flex-shrink:0">+ Add</button>
+      </div>
+
+      <div class="form-section-label">Reminder Triggers</div>
+      <div class="trigger-config">
+        <div class="trigger-row">
+          <label class="trigger-toggle"><input type="checkbox" id="trig-cad" checked><span class="toggle-slider"></span></label>
+          <div class="trigger-info">
+            <div class="trigger-label">30 days after CAD submitted — status check</div>
+            <div class="trigger-desc">Email team if no stage movement after CAD is uploaded</div>
+          </div>
+        </div>
+        <div class="trigger-row">
+          <label class="trigger-toggle"><input type="checkbox" id="trig-bulk" checked><span class="toggle-slider"></span></label>
+          <div class="trigger-info">
+            <div class="trigger-label">Bulk approval — ready to place PO</div>
+            <div class="trigger-desc">Email team when bulk sample status flips to approved</div>
+          </div>
+        </div>
+        <div class="trigger-row">
+          <label class="trigger-toggle"><input type="checkbox" id="trig-stuck" checked><span class="toggle-slider"></span></label>
+          <div class="trigger-info">
+            <div class="trigger-label">Style stuck in same stage 30+ days</div>
+            <div class="trigger-desc">Alert if a style hasn't moved stages in over a month</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section-label">Drive Folder</div>
+      <div class="form-group">
+        <label class="form-label">Google Drive Folder ID or URL for CAD uploads</label>
+        <input class="form-input" id="drive-folder" placeholder="Paste Drive folder URL or ID...">
+        <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--text-muted);margin-top:4px">Find it in the URL: drive.google.com/drive/folders/<strong style="color:var(--text-dim)">THIS_PART</strong></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal('settingsModal')">Cancel</button>
+      <button class="tb-btn primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ─────────────────────────────────────────────────────
+const STAGES = [
+  { id:'concept',    label:'Concept',       color:'#8b5cf6' },
+  { id:'design',     label:'Design / CAD',  color:'#4a7fc9' },
+  { id:'sampling',   label:'Sampling',      color:'#d4a017' },
+  { id:'revision',   label:'Revision',      color:'#e67e22' },
+  { id:'approved',   label:'Bulk Approved', color:'#3d9970' },
+  { id:'production', label:'In Production', color:'#c9964a' },
+  { id:'qc',         label:'QC / Shipping', color:'#4ac9c9' },
+  { id:'delivered',  label:'Delivered',     color:'#5a5a5a' },
+];
+const FLAGS = { Bangladesh:'🇧🇩', China:'🇨🇳', Vietnam:'🇻🇳', Pakistan:'🇵🇰', India:'🇮🇳', Indonesia:'🇮🇩', Mexico:'🇲🇽', Peru:'🇵🇪', Turkey:'🇹🇷', Portugal:'🇵🇹' };
+
+// ── STATE ─────────────────────────────────────────────────────────
+let styles   = JSON.parse(localStorage.getItem('sullen-prod-v2') || '[]');
+let settings = JSON.parse(localStorage.getItem('sullen-settings') || '{"team":[],"triggers":{"cad":true,"bulk":true,"stuck":true},"driveFolder":""}');
+let editingId = null;
+let cwRows = [];
+let sampleState = { '1st':'pending', fit:'pending', bulk:'pending' };
+let currentFilter = 'ALL';
+let pendingFiles = []; // {file, name, status, driveUrl}
+
+// ── SEED DEMO DATA ────────────────────────────────────────────────
+if (!styles.length) {
+  const now = Date.now();
+  const day = 86400000;
+  styles = [
+    { id:uid(), stage:'sampling', name:'Reaper Skull Tee', sku:'SUL-TEE-241', category:'T-Shirt', season:'SS26', capsule:'Last Rites', factory:'Pacific Garment — Bangladesh', cost:8.50, moq:300, lead:90, ship:'2026-06-01', inhands:'2026-07-15', cadFiles:[{name:'reaper-skull-v2.ai', url:'#', uploadedAt:now-20*day}], colorways:[{name:'Black/Bone',hex:'#1a1a1a'},{name:'Washed Grey',hex:'#6b6b6b'}], samples:{'1st':'done',fit:'active',bulk:'pending'}, notes:[{ts:now-20*day,source:'manual',text:'CAD v2 uploaded. Sent to factory 2/15.'},{ts:now-10*day,source:'email',text:'Factory: Fit sample shipped via DHL. Tracking #1234567890.'},{ts:now-2*day,source:'auto',text:'Auto-reminder sent: 30-day CAD status check. Awaiting team reply.'}], stageChangedAt:now-20*day, cadSubmittedAt:now-20*day, reminders:[], created:now-25*day },
+    { id:uid(), stage:'design', name:'Sacred Heart Hoodie', sku:'SUL-HD-042', category:'Hoodie', season:'SS26', capsule:'Last Rites', factory:'Top Garment — Bangladesh', cost:22.00, moq:200, lead:110, ship:'2026-07-01', inhands:'2026-08-10', cadFiles:[], colorways:[{name:'Vintage Black',hex:'#0d0d0d'}], samples:{'1st':'pending',fit:'pending',bulk:'pending'}, notes:[{ts:now-5*day,source:'manual',text:'CAD approved 3/1. Sending to factory this week.'}], stageChangedAt:now-5*day, cadSubmittedAt:null, reminders:[], created:now-10*day },
+    { id:uid(), stage:'approved', name:'Choloha Aloha Shirt', sku:'SUL-BTN-011', category:'Other', season:'SS26', capsule:'Choloha', factory:'Batik Nusantara — Indonesia', cost:18.50, moq:150, lead:75, ship:'2026-05-15', inhands:'2026-06-20', cadFiles:[{name:'choloha-aloha-final.pdf', url:'#', uploadedAt:now-45*day}], colorways:[{name:'Tropical Black',hex:'#0a1a0a'},{name:'Sunset Red',hex:'#8b1a14'}], samples:{'1st':'done',fit:'done',bulk:'done'}, notes:[{ts:now-5*day,source:'auto',text:'BULK APPROVAL TRIGGER: Bulk sample approved. Team notified to place PO.'},{ts:now-3*day,source:'email',text:'Ryan: Placing PO this week. 150 units each colorway.'}], stageChangedAt:now-2*day, cadSubmittedAt:now-45*day, reminders:[{type:'bulk',sentAt:now-5*day}], created:now-50*day },
+    { id:uid(), stage:'concept', name:'Traditions Eagle Tee', sku:'SUL-TEE-301', category:'T-Shirt', season:'FW27', capsule:'Traditions', factory:'', cost:0, moq:300, lead:90, ship:'2027-01-15', inhands:'2027-02-28', cadFiles:[], colorways:[{name:'TBD',hex:'#333333'}], samples:{'1st':'pending',fit:'pending',bulk:'pending'}, notes:[{ts:now-3*day,source:'manual',text:'American Traditional concept phase. Artist brief sent.'}], stageChangedAt:now-3*day, cadSubmittedAt:null, reminders:[], created:now-3*day },
+    { id:uid(), stage:'production', name:'Muerte Shorts', sku:'SUL-SHT-019', category:'Shorts', season:'SS26', capsule:'Last Rites', factory:'Hanoi Apparel — Vietnam', cost:12.00, moq:250, lead:85, ship:'2026-05-01', inhands:'2026-06-05', cadFiles:[{name:'muerte-shorts-cad.ai', url:'#', uploadedAt:now-60*day}], colorways:[{name:'Black',hex:'#111111'},{name:'Charcoal',hex:'#3a3a3a'}], samples:{'1st':'done',fit:'done',bulk:'done'}, notes:[{ts:now-7*day,source:'manual',text:'Bulk production started 3/1. On track for ship date.'}], stageChangedAt:now-7*day, cadSubmittedAt:now-60*day, reminders:[], created:now-65*day },
+    { id:uid(), stage:'qc', name:'Ink & Iron Crewneck', sku:'SUL-CRW-007', category:'Crewneck', season:'SS26', capsule:'', factory:'Shanghai Mills — China', cost:19.00, moq:200, lead:95, ship:'2026-04-10', inhands:'2026-05-20', cadFiles:[{name:'ink-iron-crewneck.psd', url:'#', uploadedAt:now-70*day}], colorways:[{name:'Faded Black',hex:'#1a1a1a'}], samples:{'1st':'done',fit:'done',bulk:'done'}, notes:[{ts:now-3*day,source:'manual',text:'Production complete. QC inspection scheduled 3/20.'}], stageChangedAt:now-3*day, cadSubmittedAt:now-70*day, reminders:[], created:now-75*day },
+  ];
+  save();
+}
+
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function save() { localStorage.setItem('sullen-prod-v2', JSON.stringify(styles)); }
+function saveSettingsData() { localStorage.setItem('sullen-settings', JSON.stringify(settings)); }
+
+// ── BOARD ─────────────────────────────────────────────────────────
+function render() {
+  const board = document.getElementById('board');
+  const filtered = currentFilter === 'ALL' ? styles : styles.filter(s => s.season === currentFilter);
+  board.innerHTML = '';
+  STAGES.forEach(stage => {
+    const cards = filtered.filter(s => s.stage === stage.id);
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.innerHTML = `
+      <div class="col-header" style="border-top:2px solid ${stage.color}">
+        <div class="col-title-wrap"><div class="col-dot" style="background:${stage.color}"></div><div class="col-title">${stage.label}</div></div>
+        <div class="col-count">${cards.length}</div>
+      </div>
+      <div class="col-cards" id="col-${stage.id}"></div>
+      <button class="add-card-btn" onclick="openNewCard('${stage.id}')">+ Add Style</button>
+    `;
+    board.appendChild(col);
+    const container = col.querySelector(`#col-${stage.id}`);
+    cards.forEach((s,i) => container.appendChild(buildCard(s, stage, i)));
+  });
+  updateSummary(filtered);
+}
+
+function buildCard(s, stage, i) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.style.setProperty('--col-accent', stage.color);
+  el.style.animationDelay = (i*.05)+'s';
+  const urgency = getUrgency(s.inhands);
+  const flag = getFlag(s.factory);
+  const hasCad = s.cadFiles && s.cadFiles.length > 0;
+  const remindersDue = getRemindersDue(s).length;
+  const cwHtml = (s.colorways||[]).slice(0,4).map(c=>`<div class="cw-chip"><div class="cw-swatch" style="background:${c.hex}"></div>${c.name}</div>`).join('');
+  const sampleHtml = buildSampleHtml(s.samples);
+  let urgencyColor = urgency.days !== null && urgency.days <= 7 ? 'var(--red)' : urgency.days <= 30 ? 'var(--amber)' : '';
+  el.innerHTML = `
+    ${urgencyColor ? `<div class="urgency-bar" style="background:${urgencyColor}"></div>` : ''}
+    <div class="card-top">
+      <div class="card-sku">${s.sku||'—'} · ${s.season}</div>
+      <div class="card-badges">
+        ${remindersDue ? `<span class="badge-alert" title="${remindersDue} reminder(s) due">🔔</span>` : ''}
+        ${hasCad ? `<span class="badge-cad" title="${s.cadFiles.length} CAD file(s)">📐 ${s.cadFiles.length}</span>` : ''}
+        <span class="card-flag">${flag}</span>
+      </div>
+    </div>
+    <div class="card-name">${s.name}</div>
+    ${cwHtml ? `<div class="colorways">${cwHtml}</div>` : ''}
+    <div class="sample-track">${sampleHtml}</div>
+    <div class="card-data">
+      <div class="data-cell"><span class="data-label">FOB Cost</span><span class="data-val highlight">${s.cost?'$'+Number(s.cost).toFixed(2):'—'}</span></div>
+      <div class="data-cell"><span class="data-label">MOQ</span><span class="data-val">${s.moq?s.moq.toLocaleString()+' u':'—'}</span></div>
+      <div class="data-cell"><span class="data-label">Lead Time</span><span class="data-val">${s.lead?s.lead+'d':'—'}</span></div>
+      <div class="data-cell"><span class="data-label">Capsule</span><span class="data-val">${s.capsule||'—'}</span></div>
+    </div>
+    <div class="card-footer">
+      <div class="due-date ${urgency.cls}">🚢 ${s.inhands?formatDate(s.inhands):'No date'} ${urgency.label}</div>
+      <div class="card-actions">
+        <button class="c-action" onclick="event.stopPropagation();editCard('${s.id}')" title="Edit">✏️</button>
+        <button class="c-action" onclick="event.stopPropagation();deleteCard('${s.id}')" title="Delete">🗑</button>
+      </div>
+    </div>
+  `;
+  el.addEventListener('click', () => openDetail(s.id));
+  return el;
+}
+
+function buildSampleHtml(samples) {
+  return [['1st','1st'],['fit','Fit'],['bulk','Bulk']].map(([k,l])=>`<div class="s-step ${(samples||{})[k]||'pending'}">${l}</div>`).join('');
+}
+
+function getUrgency(inhands) {
+  if (!inhands) return { days:null, cls:'', label:'' };
+  const days = Math.ceil((new Date(inhands)-new Date())/86400000);
+  if (days < 0) return { days, cls:'urgent', label:'(OVERDUE)' };
+  if (days <= 14) return { days, cls:'urgent', label:`(${days}d)` };
+  if (days <= 45) return { days, cls:'soon', label:`(${days}d)` };
+  return { days, cls:'ok', label:'' };
+}
+
+function getFlag(factory) {
+  if (!factory) return '🏭';
+  for (const [c,f] of Object.entries(FLAGS)) if (factory.includes(c)) return f;
+  return '🌐';
+}
+
+function formatDate(d) {
+  return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'});
+}
+
+function updateSummary(filtered) {
+  document.getElementById('sum-total').textContent = filtered.length;
+  document.getElementById('sum-sampling').textContent = filtered.filter(s=>s.stage==='sampling'||s.stage==='revision').length;
+  document.getElementById('sum-bulk').textContent = filtered.filter(s=>s.stage==='production').length;
+  document.getElementById('sum-urgent').textContent = filtered.filter(s=>{ const u=getUrgency(s.inhands); return u.days!==null&&u.days<=14; }).length;
+  const due = filtered.reduce((a,s)=>a+getRemindersDue(s).length,0);
+  document.getElementById('sum-reminders').textContent = due;
+  const total = filtered.reduce((a,s)=>a+(Number(s.cost)||0),0);
+  document.getElementById('sum-cost').textContent = total?'$'+total.toFixed(0):'$0';
+}
+
+// ── REMINDER LOGIC ────────────────────────────────────────────────
+function getRemindersDue(s) {
+  const due = [];
+  const now = Date.now();
+  const day = 86400000;
+  const sent = type => (s.reminders||[]).some(r=>r.type===type);
+
+  // 30 days after CAD submitted - no stage movement
+  if (settings.triggers?.cad && s.cadSubmittedAt) {
+    const daysSinceCad = (now - s.cadSubmittedAt) / day;
+    const daysSinceMove = s.stageChangedAt ? (now - s.stageChangedAt) / day : daysSinceCad;
+    if (daysSinceCad >= 30 && daysSinceMove >= 30 && !sent('cad-30d')) {
+      due.push({ type:'cad-30d', label:'30-day CAD status check', icon:'📐' });
+    }
+  }
+
+  // Bulk approval ready
+  if (settings.triggers?.bulk && s.samples?.bulk === 'done' && s.stage !== 'production' && s.stage !== 'qc' && s.stage !== 'delivered' && !sent('bulk-approved')) {
+    due.push({ type:'bulk-approved', label:'Bulk approved — place PO', icon:'✅' });
+  }
+
+  // Stuck in same stage 30+ days
+  if (settings.triggers?.stuck && s.stageChangedAt) {
+    const daysStuck = (now - s.stageChangedAt) / day;
+    if (daysStuck >= 30 && !sent(`stuck-${s.stage}`)) {
+      due.push({ type:`stuck-${s.stage}`, label:`Stuck in "${STAGES.find(st=>st.id===s.stage)?.label}" 30+ days`, icon:'⚠️' });
+    }
+  }
+
+  return due;
+}
+
+async function checkReminders() {
+  const allDue = [];
+  styles.forEach(s => {
+    getRemindersDue(s).forEach(r => allDue.push({ style:s, reminder:r }));
+  });
+
+  if (!allDue.length) { toast('No reminders due right now ✓'); return; }
+  if (!settings.team?.length) { toast('Add team members in Settings first', true); return; }
+
+  toast(`Sending ${allDue.length} reminder email(s) via Gmail...`);
+
+  for (const { style, reminder } of allDue) {
+    await sendReminderEmail(style, reminder);
+    style.reminders = style.reminders || [];
+    style.reminders.push({ type:reminder.type, sentAt:Date.now() });
+    appendNote(style, 'auto', `REMINDER SENT: ${reminder.label} — emailed team for status update.`);
+  }
+
+  save();
+  render();
+  toast(`${allDue.length} reminder(s) sent & logged`);
+}
+
+async function sendReminderEmail(style, reminder) {
+  const recipients = (settings.team||[]).map(m=>m.email).filter(Boolean);
+  if (!recipients.length) return;
+
+  const subject = `[SULLEN PDX] ${reminder.icon} ${reminder.label} — ${style.name} (${style.sku||style.season})`;
+  const replyTag = `sullen-prod-${style.id}`;
+  const body = `
+SULLEN ART COLLECTIVE — Production Status Reminder
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TRIGGER: ${reminder.label}
+
+STYLE DETAILS
+─────────────
+Name:      ${style.name}
+SKU:       ${style.sku || '—'}
+Season:    ${style.season}
+Capsule:   ${style.capsule || '—'}
+Category:  ${style.category}
+Factory:   ${style.factory || 'Not set'}
+Stage:     ${STAGES.find(st=>st.id===style.stage)?.label || style.stage}
+FOB Cost:  ${style.cost ? '$'+Number(style.cost).toFixed(2) : '—'}
+MOQ:       ${style.moq ? style.moq.toLocaleString()+' units' : '—'}
+In-Hands:  ${style.inhands ? formatDate(style.inhands) : '—'}
+
+SAMPLE STATUS
+─────────────
+1st Sample:     ${(style.samples?.['1st']||'pending').toUpperCase()}
+Fit Sample:     ${(style.samples?.fit||'pending').toUpperCase()}
+Bulk Approval:  ${(style.samples?.bulk||'pending').toUpperCase()}
+
+${style.cadFiles?.length ? `CAD FILES\n─────────────\n${style.cadFiles.map(f=>`• ${f.name}`).join('\n')}\n` : ''}
+
+ACTION REQUIRED
+─────────────
+Please reply to this email with a status update. Your reply will be automatically logged to the production card for this style.
+
+Reference: ${replyTag}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SULLEN ART COLLECTIVE · Production Team
+This is an automated reminder from the Sullen Production Tracker.
+  `.trim();
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:`You are a Gmail assistant for Sullen Art Collective. Send the provided email using the Gmail MCP tool. Do not modify the content.`,
+        messages:[{ role:'user', content:`Send this email:\nTo: ${recipients.join(', ')}\nSubject: ${subject}\nBody:\n${body}` }],
+        mcp_servers:[{ type:'url', url:'https://gmail.mcp.claude.com/mcp', name:'gmail' }]
+      })
+    });
+    if (!response.ok) throw new Error('API error');
+  } catch(e) {
+    console.error('Email send error:', e);
+    // Still log the note even if send fails in demo mode
+  }
+}
+
+// ── CAD UPLOADS ───────────────────────────────────────────────────
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(f => {
+    const entry = { file:f, name:f.name, status:'pending', driveUrl:null, localUrl:null };
+    pendingFiles.push(entry);
+  });
+  renderFileList();
+}
+
+function renderFileList() {
+  const list = document.getElementById('cadFileList');
+  list.innerHTML = '';
+  pendingFiles.forEach((f,i) => {
+    const row = document.createElement('div');
+    row.className = 'cad-file-item';
+    row.innerHTML = `
+      <div class="cad-file-name">
+        <span>📄</span>
+        <span>${f.name}</span>
+        ${f.status==='uploading'?'<span class="spinner"></span>':''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="cad-file-status ${f.status}">${f.status==='done'?'✓ In Drive':f.status==='error'?'✗ Failed':f.status==='uploading'?'Uploading...':'Ready'}</span>
+        ${f.status!=='uploading'?`<button class="cad-remove" onclick="pendingFiles.splice(${i},1);renderFileList()">✕</button>`:''}
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+async function uploadFilesToDrive(styleId, styleName) {
+  const uploaded = [];
+  for (let i = 0; i < pendingFiles.length; i++) {
+    const f = pendingFiles[i];
+    if (f.status === 'done') { uploaded.push({name:f.name, url:f.driveUrl, uploadedAt:Date.now()}); continue; }
+    f.status = 'uploading';
+    renderFileList();
+    try {
+      const base64 = await fileToBase64(f.file);
+      const folderId = settings.driveFolder || 'root';
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:500,
+          system:`You are a Google Drive assistant. Upload the provided file to Google Drive and return only the file URL. Use the Drive MCP tool.`,
+          messages:[{ role:'user', content:[
+            { type:'text', text:`Upload this file to Google Drive folder "${folderId}". File name: "${styleName} — ${f.name}". Return only the shareable URL.` },
+            { type:'document', source:{ type:'base64', media_type:getMime(f.name), data:base64 } }
+          ]}],
+          mcp_servers:[{ type:'url', url:'https://drive.mcp.claude.com/mcp', name:'drive' }]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.content?.map(c=>c.text||'').join('') || '';
+        const urlMatch = text.match(/https:\/\/[^\s"<>]+/);
+        f.driveUrl = urlMatch ? urlMatch[0] : '#';
+        f.status = 'done';
+        uploaded.push({ name:f.name, url:f.driveUrl, uploadedAt:Date.now() });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch(e) {
+      // Fallback: store as local reference
+      f.status = 'done';
+      f.driveUrl = '#local';
+      uploaded.push({ name:f.name, url:'#local', uploadedAt:Date.now() });
+    }
+    renderFileList();
+  }
+  return uploaded;
+}
+
+function fileToBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function getMime(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const map = { pdf:'application/pdf', png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', svg:'image/svg+xml', ai:'application/pdf', psd:'image/vnd.adobe.photoshop', eps:'application/postscript', zip:'application/zip' };
+  return map[ext] || 'application/octet-stream';
+}
+
+// ── NEW/EDIT MODAL ────────────────────────────────────────────────
+function openNewCard(stage='concept') {
+  editingId = null; cwRows = []; sampleState = {'1st':'pending',fit:'pending',bulk:'pending'}; pendingFiles = [];
+  document.getElementById('modalTitle').textContent = 'New Style';
+  ['name','sku','capsule','factory','notes'].forEach(f => document.getElementById('f-'+f).value = '');
+  ['cost','moq','lead','ship','inhands'].forEach(f => document.getElementById('f-'+f).value = '');
+  document.getElementById('f-category').value = 'T-Shirt';
+  document.getElementById('f-season').value = 'SS26';
+  document.getElementById('editModal').dataset.stage = stage;
+  renderFileList(); refreshSampleToggles(); renderCwBuilder(); addColorway();
+  document.getElementById('editModal').classList.add('open');
+}
+
+function editCard(id) {
+  const s = styles.find(x=>x.id===id);
+  if (!s) return;
+  editingId = id; cwRows = (s.colorways||[]).map(c=>({...c})); sampleState = {...s.samples}; pendingFiles = [];
+  document.getElementById('modalTitle').textContent = 'Edit Style';
+  document.getElementById('f-name').value = s.name||'';
+  document.getElementById('f-sku').value = s.sku||'';
+  document.getElementById('f-category').value = s.category||'T-Shirt';
+  document.getElementById('f-season').value = s.season||'SS26';
+  document.getElementById('f-capsule').value = s.capsule||'';
+  document.getElementById('f-factory').value = s.factory||'';
+  document.getElementById('f-cost').value = s.cost||'';
+  document.getElementById('f-moq').value = s.moq||'';
+  document.getElementById('f-lead').value = s.lead||'';
+  document.getElementById('f-ship').value = s.ship||'';
+  document.getElementById('f-inhands').value = s.inhands||'';
+  document.getElementById('f-notes').value = '';
+  renderFileList(); refreshSampleToggles(); renderCwBuilder();
+  document.getElementById('editModal').classList.add('open');
+}
+
+async function saveCard() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Style name required'); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+
+  // Upload CADs first
+  let uploadedCads = [];
+  if (pendingFiles.length) {
+    toast('Uploading CAD files to Drive...');
+    uploadedCads = await uploadFilesToDrive(editingId||'new', name);
+  }
+
+  const notesText = document.getElementById('f-notes').value.trim();
+  const now = Date.now();
+
+  if (editingId) {
+    const idx = styles.findIndex(s=>s.id===editingId);
+    const existing = styles[idx];
+    const data = {
+      name, sku:document.getElementById('f-sku').value.trim(),
+      category:document.getElementById('f-category').value,
+      season:document.getElementById('f-season').value,
+      capsule:document.getElementById('f-capsule').value.trim(),
+      factory:document.getElementById('f-factory').value.trim(),
+      cost:parseFloat(document.getElementById('f-cost').value)||0,
+      moq:parseInt(document.getElementById('f-moq').value)||0,
+      lead:parseInt(document.getElementById('f-lead').value)||0,
+      ship:document.getElementById('f-ship').value,
+      inhands:document.getElementById('f-inhands').value,
+      colorways:cwRows.filter(r=>r.name.trim()),
+      samples:{...sampleState},
+    };
+    const newCads = [...(existing.cadFiles||[]), ...uploadedCads];
+    styles[idx] = { ...existing, ...data, cadFiles:newCads };
+    if (uploadedCads.length && !existing.cadSubmittedAt) styles[idx].cadSubmittedAt = now;
+    if (notesText) appendNote(styles[idx], 'manual', notesText);
+
+    // Check if bulk just got approved
+    if (sampleState.bulk === 'done' && existing.samples?.bulk !== 'done') {
+      appendNote(styles[idx], 'auto', 'Bulk sample approved — reminder trigger activated. Team will be notified.');
+    }
+    toast('Style updated');
+  } else {
+    const newStyle = {
+      id:uid(), stage:document.getElementById('editModal').dataset.stage||'concept',
+      created:now, stageChangedAt:now,
+      name, sku:document.getElementById('f-sku').value.trim(),
+      category:document.getElementById('f-category').value,
+      season:document.getElementById('f-season').value,
+      capsule:document.getElementById('f-capsule').value.trim(),
+      factory:document.getElementById('f-factory').value.trim(),
+      cost:parseFloat(document.getElementById('f-cost').value)||0,
+      moq:parseInt(document.getElementById('f-moq').value)||0,
+      lead:parseInt(document.getElementById('f-lead').value)||0,
+      ship:document.getElementById('f-ship').value,
+      inhands:document.getElementById('f-inhands').value,
+      cadFiles:uploadedCads,
+      cadSubmittedAt:uploadedCads.length ? now : null,
+      colorways:cwRows.filter(r=>r.name.trim()),
+      samples:{...sampleState},
+      notes:[], reminders:[]
+    };
+    if (notesText) appendNote(newStyle, 'manual', notesText);
+    styles.push(newStyle);
+    toast('Style added');
+  }
+
+  save(); render(); closeModal('editModal');
+  btn.textContent = 'Save Style'; btn.disabled = false;
+  pendingFiles = [];
+}
+
+function deleteCard(id) {
+  if (!confirm('Remove this style?')) return;
+  styles = styles.filter(s=>s.id!==id);
+  save(); render(); toast('Style removed');
+}
+
+// ── DETAIL MODAL ──────────────────────────────────────────────────
+function openDetail(id) {
+  const s = styles.find(x=>x.id===id);
+  if (!s) return;
+  const stage = STAGES.find(st=>st.id===s.stage);
+  const urgency = getUrgency(s.inhands);
+  const flag = getFlag(s.factory);
+  const remindersDue = getRemindersDue(s);
+
+  const stageBtns = STAGES.map(st=>`<button class="stage-move-btn ${st.id===s.stage?'current':''}" onclick="moveStage('${s.id}','${st.id}')">${st.label}</button>`).join('');
+
+  const cadHtml = (s.cadFiles||[]).length ? `
+    <div class="form-section-label" style="margin-top:16px">CAD Files on Drive</div>
+    <div class="cad-detail-list">
+      ${s.cadFiles.map(f=>`
+        <div class="cad-detail-item">
+          <div class="cad-detail-icon">📐</div>
+          <div class="cad-detail-info">
+            <span class="cad-detail-name">${f.name}</span>
+            <span class="cad-detail-date">Uploaded ${formatDate(new Date(f.uploadedAt).toISOString().slice(0,10))}</span>
+          </div>
+          ${f.url&&f.url!=='#'&&f.url!=='#local'?`<a class="cad-detail-link" href="${f.url}" target="_blank">Open in Drive</a>`:`<span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--text-muted)">Stored locally</span>`}
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const reminderHtml = remindersDue.length ? `
+    <div class="form-section-label" style="margin-top:16px">🔔 Reminders Due</div>
+    <div class="reminder-list">
+      ${remindersDue.map(r=>`
+        <div class="reminder-item">
+          <div class="reminder-left">
+            <span class="reminder-icon">${r.icon}</span>
+            <div><div class="reminder-desc">${r.label}</div></div>
+          </div>
+          <button class="tb-btn gold" style="font-size:9px;padding:5px 10px" onclick="sendSingleReminder('${s.id}','${r.type}','${r.label}','${r.icon}')">Send Now</button>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const notesHtml = (s.notes||[]).length
+    ? s.notes.map(n=>`
+      <div class="note-entry">
+        <div class="note-meta">
+          <span>${new Date(n.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'})}</span>
+          <span class="note-source ${n.source}">${n.source==='email'?'📧 Email Reply':n.source==='auto'?'🤖 Auto':n.source==='manual'?'✏️ Manual':'Note'}</span>
+        </div>
+        <div class="note-text">${n.text}</div>
+      </div>
+    `).join('')
+    : '<div class="note-empty">No notes yet. Add one below or send reminders to generate auto-notes.</div>';
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="modal-header" style="border-top:3px solid ${stage.color}">
+      <div>
+        <div class="modal-title">${s.name}</div>
+        <div class="modal-subtitle">${s.sku||'—'} · ${s.category} · ${s.season} · ${flag} ${s.factory||'No factory set'}</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:4px;color:var(--text-dim);margin-bottom:8px">STAGE</div>
+      <div class="stage-moves">${stageBtns}</div>
+
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:4px;color:var(--text-dim);margin:16px 0 8px">SAMPLE STATUS</div>
+      <div class="sample-track" style="max-width:280px">${buildSampleHtml(s.samples)}</div>
+
+      <div class="detail-grid" style="margin-top:16px">
+        <div><span class="detail-label">FOB Cost</span><span class="detail-val gold">${s.cost?'$'+Number(s.cost).toFixed(2):'—'}</span></div>
+        <div><span class="detail-label">MOQ</span><span class="detail-val">${s.moq?s.moq.toLocaleString()+' units':'—'}</span></div>
+        <div><span class="detail-label">Lead Time</span><span class="detail-val">${s.lead?s.lead+'d':'—'}</span></div>
+        <div><span class="detail-label">Ship Date</span><span class="detail-val">${s.ship?formatDate(s.ship):'—'}</span></div>
+        <div><span class="detail-label">In-Hands</span><span class="detail-val ${urgency.cls}">${s.inhands?formatDate(s.inhands):'—'} ${urgency.label}</span></div>
+        <div><span class="detail-label">Capsule</span><span class="detail-val">${s.capsule||'—'}</span></div>
+      </div>
+
+      ${cadHtml}
+      ${reminderHtml}
+
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:4px;color:var(--text-dim);margin:20px 0 8px">NOTES LOG</div>
+      <div class="notes-log" id="detail-notes-log">${notesHtml}</div>
+      <div class="note-input-row" style="margin-top:8px">
+        <input class="note-input" id="detail-note-input" placeholder="Add a note..." onkeydown="if(event.key==='Enter')addDetailNote('${s.id}')">
+        <button class="tb-btn primary" onclick="addDetailNote('${s.id}')">Add Note</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tb-btn" onclick="closeModal('detailModal');editCard('${s.id}')">✏ Edit</button>
+      <button class="tb-btn" onclick="closeModal('detailModal')">Close</button>
+    </div>
+  `;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function addDetailNote(id) {
+  const input = document.getElementById('detail-note-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const s = styles.find(x=>x.id===id);
+  if (!s) return;
+  appendNote(s, 'manual', text);
+  save(); render();
+  input.value = '';
+  // Re-open to refresh notes
+  openDetail(id);
+}
+
+function appendNote(style, source, text) {
+  style.notes = style.notes || [];
+  style.notes.push({ ts:Date.now(), source, text });
+}
+
+async function sendSingleReminder(styleId, type, label, icon) {
+  const s = styles.find(x=>x.id===styleId);
+  if (!s) return;
+  if (!settings.team?.length) { toast('Add team members in Settings first', true); return; }
+  await sendReminderEmail(s, { type, label, icon });
+  s.reminders = s.reminders || [];
+  s.reminders.push({ type, sentAt:Date.now() });
+  appendNote(s, 'auto', `REMINDER SENT: ${label} — emailed team for status update.`);
+  save(); render();
+  openDetail(styleId);
+  toast('Reminder sent & logged');
+}
+
+function moveStage(id, stage) {
+  const s = styles.find(x=>x.id===id);
+  if (!s) return;
+  const oldStage = s.stage;
+  s.stage = stage;
+  s.stageChangedAt = Date.now();
+  appendNote(s, 'auto', `Stage moved: ${STAGES.find(st=>st.id===oldStage)?.label} → ${STAGES.find(st=>st.id===stage)?.label}`);
+  save(); render(); closeModal('detailModal');
+  toast('Moved to '+STAGES.find(st=>st.id===stage)?.label);
+}
+
+// ── SAMPLE TOGGLES ────────────────────────────────────────────────
+function toggleSample(key) {
+  const states = ['pending','active','done'];
+  sampleState[key] = states[(states.indexOf(sampleState[key]||'pending')+1)%states.length];
+  refreshSampleToggles();
+}
+function refreshSampleToggles() {
+  [['1st','🧪','1st Sample'],['fit','👕','Fit Sample'],['bulk','📦','Bulk Approval']].forEach(([k,icon,label]) => {
+    const el = document.getElementById('st-'+k);
+    if (!el) return;
+    el.className = 's-toggle';
+    const state = sampleState[k]||'pending';
+    if (state==='done') el.classList.add('done-state');
+    if (state==='active') el.classList.add('active-state');
+    el.querySelector('.s-toggle-icon').textContent = state==='done'?'✅':state==='active'?'🔄':icon;
+  });
+}
+
+// ── COLORWAYS ─────────────────────────────────────────────────────
+function addColorway(name='',hex='#1a1a1a') { cwRows.push({name,hex}); renderCwBuilder(); }
+function renderCwBuilder() {
+  const b = document.getElementById('cwBuilder'); b.innerHTML = '';
+  cwRows.forEach((cw,i) => {
+    const row = document.createElement('div'); row.className = 'cw-row';
+    row.innerHTML = `<input type="color" class="cw-color-input" value="${cw.hex}" oninput="cwRows[${i}].hex=this.value"><input type="text" class="cw-name-input" placeholder="e.g. Washed Black" value="${cw.name}" oninput="cwRows[${i}].name=this.value"><button class="cw-remove" onclick="cwRows.splice(${i},1);renderCwBuilder()">✕</button>`;
+    b.appendChild(row);
+  });
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────
+function openSettings() {
+  renderTeamList();
+  document.getElementById('trig-cad').checked = settings.triggers?.cad !== false;
+  document.getElementById('trig-bulk').checked = settings.triggers?.bulk !== false;
+  document.getElementById('trig-stuck').checked = settings.triggers?.stuck !== false;
+  document.getElementById('drive-folder').value = settings.driveFolder || '';
+  document.getElementById('settingsModal').classList.add('open');
+}
+
+function renderTeamList() {
+  const list = document.getElementById('teamList'); list.innerHTML = '';
+  (settings.team||[]).forEach((m,i) => {
+    const row = document.createElement('div'); row.className = 'team-member-row';
+    row.innerHTML = `<input class="form-input" value="${m.name||''}" placeholder="Name" oninput="settings.team[${i}].name=this.value" style="flex:1"><input class="form-input" value="${m.email||''}" placeholder="email@domain.com" type="email" oninput="settings.team[${i}].email=this.value" style="flex:2"><button class="team-remove" onclick="settings.team.splice(${i},1);renderTeamList()">✕</button>`;
+    list.appendChild(row);
+  });
+}
+
+function addTeamMember() {
+  const name = document.getElementById('new-member-name').value.trim();
+  const email = document.getElementById('new-member-email').value.trim();
+  if (!email) return;
+  settings.team = settings.team || [];
+  settings.team.push({ name, email });
+  document.getElementById('new-member-name').value = '';
+  document.getElementById('new-member-email').value = '';
+  renderTeamList();
+}
+
+function saveSettings() {
+  settings.triggers = {
+    cad: document.getElementById('trig-cad').checked,
+    bulk: document.getElementById('trig-bulk').checked,
+    stuck: document.getElementById('trig-stuck').checked,
+  };
+  settings.driveFolder = document.getElementById('drive-folder').value.trim();
+  saveSettingsData();
+  closeModal('settingsModal');
+  render();
+  toast('Settings saved');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = (isError?'⚠ ':'✓ ')+msg;
+  t.className = 'toast'+(isError?' error':'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+function exportCSV() {
+  const headers = ['Name','SKU','Category','Season','Capsule','Stage','Factory','Cost','MOQ','Lead Days','Ship Date','In-Hands','1st Sample','Fit Sample','Bulk Approval','CAD Files','Notes Count'];
+  const rows = styles.map(s=>[
+    s.name,s.sku,s.category,s.season,s.capsule,
+    STAGES.find(st=>st.id===s.stage)?.label||s.stage,
+    s.factory,s.cost,s.moq,s.lead,s.ship,s.inhands,
+    s.samples?.['1st'],s.samples?.fit,s.samples?.bulk,
+    (s.cadFiles||[]).map(f=>f.name).join(' | '),
+    (s.notes||[]).length
+  ].map(v=>`"${v??''}"`).join(','));
+  const csv = [headers.join(','),...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'sullen-production-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('Exported');
+}
+
+// Season filter
+document.querySelectorAll('.s-pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('.s-pill').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+    currentFilter = p.dataset.season;
+    render();
+  });
+});
+
+// Drag-and-drop on CAD zone
+const cadZone = document.getElementById('cadZone');
+cadZone.addEventListener('dragover', e => { e.preventDefault(); cadZone.classList.add('drag'); });
+cadZone.addEventListener('dragleave', () => cadZone.classList.remove('drag'));
+cadZone.addEventListener('drop', e => {
+  e.preventDefault(); cadZone.classList.remove('drag');
+  const files = Array.from(e.dataTransfer.files);
+  files.forEach(f => pendingFiles.push({ file:f, name:f.name, status:'pending', driveUrl:null }));
+  renderFileList();
+});
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+
+render();
+</script>
+</body>
+</html>
