@@ -1827,6 +1827,8 @@ function setSelectedTags(tags) {
     el.classList.toggle('active', tags && tags.includes(el.dataset.tag));
   });
 }
+
+    function openEditCap(id) {
   const c = S.capsules.find(x => x.id === id);
   if (!c) return;
   editPickedColor = c.color;
@@ -1846,6 +1848,7 @@ function setSelectedTags(tags) {
   });
   document.getElementById('editCapOverlay').classList.remove('hidden');
   setSelectedTags(c.tags || []);
+    }
 
 function closeEditCap() {
   document.getElementById('editCapOverlay').classList.add('hidden');
