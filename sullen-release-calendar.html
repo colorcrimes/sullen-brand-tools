@@ -670,6 +670,36 @@
 
   /* Video/link add modal */
   .video-modal { background: var(--dark); border: 1px solid var(--border); border-top: 3px solid #4fc3f7; width: 480px; max-width: 96vw; border-radius: 3px; }
+
+  /* ── Library Pull Button ── */
+  .lib-pull-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+  .lib-pull-btn { background:var(--red); color:#fff; border:none; padding:7px 14px; font-family:var(--font-ui); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; border-radius:2px; white-space:nowrap; }
+  .lib-pull-btn:hover { background:#e03030; }
+  .lib-pull-hint { color:var(--muted); font-size:11px; font-style:italic; }
+
+  /* ── Library Picker Overlay ── */
+  #libPickerOverlay { position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:9999; display:flex; align-items:center; justify-content:center; }
+  #libPickerOverlay.hidden { display:none; }
+  .lib-picker { background:var(--card); border:1px solid var(--border); width:560px; max-height:70vh; display:flex; flex-direction:column; border-radius:3px; overflow:hidden; }
+  .lib-picker-head { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .lib-picker-head h3 { font-family:var(--font-d); font-size:16px; color:#fff; letter-spacing:.06em; margin:0; }
+  .lib-picker-close { background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer; line-height:1; }
+  .lib-picker-close:hover { color:#fff; }
+  .lib-search { padding:10px 14px; border-bottom:1px solid var(--border); }
+  .lib-search input { width:100%; background:var(--dark); border:1px solid var(--border); color:#fff; padding:8px 10px; font-family:var(--font-ui); font-size:13px; border-radius:2px; }
+  .lib-search input:focus { outline:none; border-color:var(--red); }
+  .lib-results { overflow-y:auto; flex:1; }
+  .lib-result-item { padding:11px 16px; border-bottom:1px solid #1e1e1e; cursor:pointer; display:flex; align-items:center; gap:12px; transition:background .15s; }
+  .lib-result-item:hover { background:var(--dark); }
+  .lib-result-thumb { width:44px; height:44px; object-fit:cover; border-radius:2px; background:var(--dark); flex-shrink:0; }
+  .lib-result-thumb-placeholder { width:44px; height:44px; background:#1a1a1a; border-radius:2px; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:18px; flex-shrink:0; }
+  .lib-result-info { flex:1; min-width:0; }
+  .lib-result-name { font-family:var(--font-ui); font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lib-result-meta { font-size:11px; color:var(--muted); margin-top:3px; }
+  .lib-result-badge { font-size:10px; background:var(--red); color:#fff; padding:2px 6px; border-radius:2px; font-weight:700; letter-spacing:.05em; flex-shrink:0; }
+  .lib-empty { padding:30px; text-align:center; color:var(--muted); font-size:13px; }
+  .lib-autofilled-badge { display:inline-flex; align-items:center; gap:5px; background:#1a3a1a; border:1px solid #2db84b40; color:#2db84b; font-size:10px; padding:3px 8px; border-radius:2px; margin-bottom:8px; font-weight:600; letter-spacing:.05em; }
+
 </style>
 </head>
 <body>
@@ -841,6 +871,10 @@ if (localStorage.getItem('sullen_auth') === '1') {
       <button class="modal-x" onclick="closeUpload()">—</button>
     </div>
     <div class="modal-body">
+      <div class="lib-pull-bar">
+        <button class="lib-pull-btn" onclick="openLibPicker()">&#128218; Pull from CAD Library</button>
+        <span class="lib-pull-hint">or enter manually below</span>
+      </div>
       <div class="fg">
         <label class="fl">Product / Style Name</label>
         <input class="fi" id="up-name" placeholder="e.g. Last Rites Reaper Tee" oninput="this.dataset.autoFilled=''">
@@ -896,6 +930,21 @@ if (localStorage.getItem('sullen_auth') === '1') {
       <button class="btn btn-ghost" onclick="closeUpload()">Cancel</button>
       <button class="btn btn-red" onclick="confirmUpload()">Add to Calendar</button>
     </div>
+  </div>
+</div>
+
+
+<!-- LIBRARY PICKER MODAL -->
+<div class="overlay hidden" id="libPickerOverlay">
+  <div class="lib-picker">
+    <div class="lib-picker-head">
+      <h3>&#128218; CAD LIBRARY</h3>
+      <button class="lib-picker-close" onclick="closeLibPicker()">&#215;</button>
+    </div>
+    <div class="lib-search">
+      <input type="text" id="libSearchInput" placeholder="Search by name, SKU, or capsule..." oninput="filterLibResults(this.value)" autocomplete="off">
+    </div>
+    <div class="lib-results" id="libResultsList"></div>
   </div>
 </div>
 
@@ -3495,6 +3544,117 @@ window.addEventListener('DOMContentLoaded', () => {
   // Load the current year's data
   loadYear(S.year);
 });
+
+  // ═══════════════════════════════════════
+  // LIBRARY PICKER — Pull from CAD Library
+  // ═══════════════════════════════════════
+  let _libAllItems = [];
+
+  function openLibPicker() {
+    _libAllItems = JSON.parse(localStorage.getItem('sullen-prod-v2') || '[]');
+    renderLibResults(_libAllItems);
+    document.getElementById('libSearchInput').value = '';
+    document.getElementById('libPickerOverlay').classList.remove('hidden');
+    setTimeout(() => document.getElementById('libSearchInput').focus(), 100);
+  }
+
+  function closeLibPicker() {
+    document.getElementById('libPickerOverlay').classList.add('hidden');
+  }
+
+  function filterLibResults(query) {
+    const q = query.toLowerCase().trim();
+    const filtered = q ? _libAllItems.filter(item =>
+      (item.name || '').toLowerCase().includes(q) ||
+      (item.sku || '').toLowerCase().includes(q) ||
+      (item.capsule || '').toLowerCase().includes(q) ||
+      (item.category || '').toLowerCase().includes(q)
+    ) : _libAllItems;
+    renderLibResults(filtered);
+  }
+
+  function renderLibResults(items) {
+    const el = document.getElementById('libResultsList');
+    if (!items.length) {
+      el.innerHTML = '<div class="lib-empty">No items in CAD Library yet.<br>Add products in the CAD Library tool first.</div>';
+      return;
+    }
+    el.innerHTML = items.map(item => {
+      const thumb = item.cadFiles && item.cadFiles[0] && item.cadFiles[0].data
+        ? '<img class="lib-result-thumb" src="' + item.cadFiles[0].data + '" alt="">'
+        : '<div class="lib-result-thumb-placeholder">&#128247;</div>';
+      const colorList = (item.colorways || []).map(c => c.name || c).filter(Boolean).slice(0,3).join(', ');
+      const costStr = item.cost ? ' · $' + item.cost : '';
+      return '<div class="lib-result-item" onclick="selectLibItem('' + item.id + '')">' +
+        thumb +
+        '<div class="lib-result-info">' +
+          '<div class="lib-result-name">' + (item.name || 'Untitled') + '</div>' +
+          '<div class="lib-result-meta">' + (item.sku || '') + ' · ' + (item.capsule || 'No capsule') + costStr + (colorList ? ' · ' + colorList : '') + '</div>' +
+        '</div>' +
+        '<div class="lib-result-badge">' + (item.stage || 'N/A').toUpperCase() + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function selectLibItem(id) {
+    const items = JSON.parse(localStorage.getItem('sullen-prod-v2') || '[]');
+    const item = items.find(x => x.id === id);
+    if (!item) return;
+    closeLibPicker();
+
+    // Populate upload modal fields
+    const nameEl = document.getElementById('up-name');
+    if (nameEl) { nameEl.value = item.name || ''; nameEl.dataset.libId = id; }
+
+    // Set capsule dropdown
+    const capEl = document.getElementById('up-cap');
+    if (capEl && item.capsule) {
+      const opt = Array.from(capEl.options).find(o => o.text === item.capsule || o.value === item.capsule);
+      if (opt) { capEl.value = opt.value; rebuildDates(); }
+    }
+
+    // Set notes with colorways + cost info
+    const notesEl = document.getElementById('up-notes');
+    if (notesEl) {
+      const colorStr = (item.colorways || []).map(c => c.name || c).filter(Boolean).join(', ');
+      const parts = [];
+      if (colorStr) parts.push('Colorways: ' + colorStr);
+      if (item.cost) parts.push('Cost: $' + item.cost);
+      if (item.sku) parts.push('SKU: ' + item.sku);
+      notesEl.value = parts.join(' | ');
+    }
+
+    // Populate CAD image previews if library has cadFiles
+    if (item.cadFiles && item.cadFiles.length > 0) {
+      const pvGrid = document.getElementById('pvGrid');
+      if (pvGrid) {
+        pvGrid.innerHTML = item.cadFiles.map((f, i) =>
+          '<div class="pv-item" data-idx="' + i + '">' +
+            '<img src="' + (f.data || '') + '" alt="' + (f.name || '') + '">' +
+            '<span>' + (f.name || 'CAD ' + (i+1)) + '</span>' +
+          '</div>'
+        ).join('');
+      }
+      // Store reference so saveLcModal can access cadFiles
+      window._libCadFiles = item.cadFiles;
+    }
+
+    // Show autofill badge in modal
+    const modalTitle = document.querySelector('#uploadOverlay .modal-title');
+    if (modalTitle && !modalTitle.querySelector('.lib-autofilled-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'lib-autofilled-badge';
+      badge.innerHTML = '&#10003; Filled from Library';
+      badge.style.cssText = 'font-size:10px;margin-left:10px;vertical-align:middle;';
+      modalTitle.appendChild(badge);
+    }
+  }
+
+  // Close picker on overlay click
+  document.getElementById('libPickerOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeLibPicker();
+  });
+
 </script>
 </body>
 </html>
