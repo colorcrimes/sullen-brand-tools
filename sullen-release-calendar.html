@@ -3546,16 +3546,17 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
   // ═══════════════════════════════════════
+  // ===========================================
   // LIBRARY PICKER — Pull from CAD Library
-  // ═══════════════════════════════════════
-  let _libAllItems = [];
+  // ===========================================
+  var _libAllItems = [];
 
   function openLibPicker() {
     _libAllItems = JSON.parse(localStorage.getItem('sullen-prod-v2') || '[]');
     renderLibResults(_libAllItems);
     document.getElementById('libSearchInput').value = '';
     document.getElementById('libPickerOverlay').classList.remove('hidden');
-    setTimeout(() => document.getElementById('libSearchInput').focus(), 100);
+    setTimeout(function() { document.getElementById('libSearchInput').focus(); }, 100);
   }
 
   function closeLibPicker() {
@@ -3563,86 +3564,82 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function filterLibResults(query) {
-    const q = query.toLowerCase().trim();
-    const filtered = q ? _libAllItems.filter(item =>
-      (item.name || '').toLowerCase().includes(q) ||
-      (item.sku || '').toLowerCase().includes(q) ||
-      (item.capsule || '').toLowerCase().includes(q) ||
-      (item.category || '').toLowerCase().includes(q)
-    ) : _libAllItems;
+    var q = query.toLowerCase().trim();
+    var filtered = q ? _libAllItems.filter(function(item) {
+      return (item.name || '').toLowerCase().indexOf(q) > -1 ||
+             (item.sku || '').toLowerCase().indexOf(q) > -1 ||
+             (item.capsule || '').toLowerCase().indexOf(q) > -1 ||
+             (item.category || '').toLowerCase().indexOf(q) > -1;
+    }) : _libAllItems;
     renderLibResults(filtered);
   }
 
   function renderLibResults(items) {
-    const el = document.getElementById('libResultsList');
+    var el = document.getElementById('libResultsList');
     if (!items.length) {
       el.innerHTML = '<div class="lib-empty">No items in CAD Library yet.<br>Add products in the CAD Library tool first.</div>';
       return;
     }
-    el.innerHTML = items.map(item => {
-      const thumb = item.cadFiles && item.cadFiles[0] && item.cadFiles[0].data
+    el.innerHTML = items.map(function(item) {
+      var thumb = (item.cadFiles && item.cadFiles[0] && item.cadFiles[0].data)
         ? '<img class="lib-result-thumb" src="' + item.cadFiles[0].data + '" alt="">'
         : '<div class="lib-result-thumb-placeholder">&#128247;</div>';
-      const colorList = (item.colorways || []).map(c => c.name || c).filter(Boolean).slice(0,3).join(', ');
-      const costStr = item.cost ? ' · $' + item.cost : '';
-      return '<div class="lib-result-item" onclick="selectLibItem('' + item.id + '')">' +
+      var colorList = (item.colorways || []).map(function(c) { return c.name || c; }).filter(Boolean).slice(0, 3).join(', ');
+      var costStr = item.cost ? ' &middot; $' + item.cost : '';
+      var metaStr = (item.sku || '') + ' &middot; ' + (item.capsule || 'No capsule') + costStr + (colorList ? ' &middot; ' + colorList : '');
+      var badge = (item.stage || 'N/A').toUpperCase();
+      return '<div class="lib-result-item" onclick="selectLibItem(' + JSON.stringify(item.id) + ')">' +
         thumb +
         '<div class="lib-result-info">' +
           '<div class="lib-result-name">' + (item.name || 'Untitled') + '</div>' +
-          '<div class="lib-result-meta">' + (item.sku || '') + ' · ' + (item.capsule || 'No capsule') + costStr + (colorList ? ' · ' + colorList : '') + '</div>' +
+          '<div class="lib-result-meta">' + metaStr + '</div>' +
         '</div>' +
-        '<div class="lib-result-badge">' + (item.stage || 'N/A').toUpperCase() + '</div>' +
+        '<div class="lib-result-badge">' + badge + '</div>' +
       '</div>';
     }).join('');
   }
 
   function selectLibItem(id) {
-    const items = JSON.parse(localStorage.getItem('sullen-prod-v2') || '[]');
-    const item = items.find(x => x.id === id);
+    var items = JSON.parse(localStorage.getItem('sullen-prod-v2') || '[]');
+    var item = items.find(function(x) { return x.id === id; });
     if (!item) return;
     closeLibPicker();
 
-    // Populate upload modal fields
-    const nameEl = document.getElementById('up-name');
+    var nameEl = document.getElementById('up-name');
     if (nameEl) { nameEl.value = item.name || ''; nameEl.dataset.libId = id; }
 
-    // Set capsule dropdown
-    const capEl = document.getElementById('up-cap');
+    var capEl = document.getElementById('up-cap');
     if (capEl && item.capsule) {
-      const opt = Array.from(capEl.options).find(o => o.text === item.capsule || o.value === item.capsule);
+      var opt = Array.from(capEl.options).find(function(o) { return o.text === item.capsule || o.value === item.capsule; });
       if (opt) { capEl.value = opt.value; rebuildDates(); }
     }
 
-    // Set notes with colorways + cost info
-    const notesEl = document.getElementById('up-notes');
+    var notesEl = document.getElementById('up-notes');
     if (notesEl) {
-      const colorStr = (item.colorways || []).map(c => c.name || c).filter(Boolean).join(', ');
-      const parts = [];
+      var colorStr = (item.colorways || []).map(function(c) { return c.name || c; }).filter(Boolean).join(', ');
+      var parts = [];
       if (colorStr) parts.push('Colorways: ' + colorStr);
       if (item.cost) parts.push('Cost: $' + item.cost);
       if (item.sku) parts.push('SKU: ' + item.sku);
       notesEl.value = parts.join(' | ');
     }
 
-    // Populate CAD image previews if library has cadFiles
     if (item.cadFiles && item.cadFiles.length > 0) {
-      const pvGrid = document.getElementById('pvGrid');
+      var pvGrid = document.getElementById('pvGrid');
       if (pvGrid) {
-        pvGrid.innerHTML = item.cadFiles.map((f, i) =>
-          '<div class="pv-item" data-idx="' + i + '">' +
+        pvGrid.innerHTML = item.cadFiles.map(function(f, i) {
+          return '<div class="pv-item" data-idx="' + i + '">' +
             '<img src="' + (f.data || '') + '" alt="' + (f.name || '') + '">' +
-            '<span>' + (f.name || 'CAD ' + (i+1)) + '</span>' +
-          '</div>'
-        ).join('');
+            '<span>' + (f.name || 'CAD ' + (i + 1)) + '</span>' +
+          '</div>';
+        }).join('');
       }
-      // Store reference so saveLcModal can access cadFiles
       window._libCadFiles = item.cadFiles;
     }
 
-    // Show autofill badge in modal
-    const modalTitle = document.querySelector('#uploadOverlay .modal-title');
+    var modalTitle = document.querySelector('#uploadOverlay .modal-title');
     if (modalTitle && !modalTitle.querySelector('.lib-autofilled-badge')) {
-      const badge = document.createElement('span');
+      var badge = document.createElement('span');
       badge.className = 'lib-autofilled-badge';
       badge.innerHTML = '&#10003; Filled from Library';
       badge.style.cssText = 'font-size:10px;margin-left:10px;vertical-align:middle;';
@@ -3650,7 +3647,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Close picker on overlay click
   document.getElementById('libPickerOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeLibPicker();
   });
