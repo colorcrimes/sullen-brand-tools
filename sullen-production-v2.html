@@ -51,6 +51,29 @@ body { background:var(--bg); color:var(--text); font-family:'Barlow Condensed',s
 .season-filter { display:flex; gap:6px; }
 .s-pill { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; padding:4px 10px; border:1px solid var(--border); background:transparent; color:var(--text-dim); cursor:pointer; transition:all .15s; text-transform:uppercase; }
 .s-pill.active { border-color:var(--gold); color:var(--gold); background:var(--gold-dim); }
+.view-toggle { display:flex; gap:6px; margin-right:14px; }
+.v-pill { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; padding:4px 12px; border:1px solid var(--border); background:transparent; color:var(--text-dim); cursor:pointer; transition:all .15s; text-transform:uppercase; }
+.v-pill.active { border-color:var(--red); color:var(--red); background:#c0392b18; }
+
+/* ── CALENDAR ── */
+.cal-day-cell { background:var(--surface); border:1px solid var(--border); min-height:80px; padding:6px; cursor:pointer; transition:background .15s; position:relative; }
+.cal-day-cell:hover { background:var(--ink); }
+.cal-day-cell.today { border-color:var(--gold); }
+.cal-day-cell.today .cal-day-num { color:var(--gold); font-weight:700; }
+.cal-day-cell.other-month { opacity:0.3; cursor:default; }
+.cal-day-cell.has-events { border-color:var(--border2); }
+.cal-day-num { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-dim); margin-bottom:4px; }
+.cal-event-dot { font-size:9px; padding:2px 5px; margin:1px 0; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.4; }
+.cal-event-dot.inhands { background:#b8963e22; color:var(--gold); border-left:2px solid var(--gold); }
+.cal-event-dot.sample { background:#3b82f622; color:#60a5fa; border-left:2px solid #3b82f6; }
+.cal-event-dot.stuck { background:#c0392b22; color:var(--red); border-left:2px solid var(--red); }
+.cal-day-label-header { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--text-dim); text-align:center; padding:6px 0; text-transform:uppercase; }
+.cal-alert-item { padding:8px 10px; background:var(--ink); border-left:3px solid var(--red); }
+.cal-alert-name { font-size:11px; color:var(--text); font-weight:600; display:block; }
+.cal-alert-sub { font-size:9px; color:var(--red); font-family:'Space Mono',monospace; letter-spacing:1px; margin-top:2px; }
+.cal-event-item { padding:8px 10px; background:var(--ink); border-left:3px solid var(--gold); }
+.cal-event-name { font-size:11px; color:var(--text); font-weight:600; display:block; }
+.cal-event-sub { font-size:9px; color:var(--text-dim); font-family:'Space Mono',monospace; letter-spacing:1px; margin-top:2px; }
 
 /* ── SUMMARY BAR ── */
 .summary-bar { display:flex; align-items:center; padding:0 28px; height:40px; border-bottom:1px solid var(--border); flex-shrink:0; background:var(--ink); overflow-x:auto; gap:0; }
@@ -262,7 +285,11 @@ body { background:var(--bg); color:var(--text); font-family:'Barlow Condensed',s
   <div class="tb-left">
     <div class="brand">SULLEN <span>·</span> PDX</div>
     <div class="page-title">Production Tracker v2</div>
-    <div class="season-filter">
+    <div class="view-toggle">
+      <button class="v-pill active" id="view-kanban" onclick="switchView('kanban')">⬛ Kanban</button>
+      <button class="v-pill" id="view-calendar" onclick="switchView('calendar')">📅 Calendar</button>
+    </div>
+    <div class="season-filter" id="season-filter-wrap">
       <button class="s-pill active" data-season="ALL">All</button>
       <button class="s-pill" data-season="SS26">SS26</button>
       <button class="s-pill" data-season="FW26">FW26</button>
@@ -287,6 +314,38 @@ body { background:var(--bg); color:var(--text); font-family:'Barlow Condensed',s
 </div>
 
 <div class="board-wrap" id="board"></div>
+
+<!-- ── CALENDAR VIEW ── -->
+<div id="calendar-view" style="display:none; padding:28px; max-width:1400px; margin:0 auto;">
+  <div style="display:grid; grid-template-columns:1fr 340px; gap:24px; align-items:start;">
+    <!-- Month Calendar -->
+    <div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <button onclick="calNav(-1)" style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:6px 14px; cursor:pointer; font-family:'Space Mono',monospace; font-size:11px;">◀ PREV</button>
+        <div id="cal-month-title" style="font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:4px; color:var(--gold);"></div>
+        <button onclick="calNav(1)" style="background:var(--surface); border:1px solid var(--border); color:var(--text); padding:6px 14px; cursor:pointer; font-family:'Space Mono',monospace; font-size:11px;">NEXT ▶</button>
+      </div>
+      <div id="cal-grid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px;"></div>
+    </div>
+    <!-- Sidebar: Alerts + Upcoming -->
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Stuck Alerts -->
+      <div style="background:var(--surface); border:1px solid var(--red); padding:16px;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:4px; color:var(--red); margin-bottom:12px;">⚠ STUCK STYLES</div>
+        <div id="cal-stuck-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+      <!-- Upcoming this month -->
+      <div style="background:var(--surface); border:1px solid var(--border); padding:16px;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:4px; color:var(--text-dim); margin-bottom:12px;">📋 THIS MONTH</div>
+        <div id="cal-month-events" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Selected day detail -->
+  <div id="cal-day-detail" style="display:none; margin-top:24px; background:var(--surface); border:1px solid var(--border); padding:20px;">
+    <div id="cal-day-detail-content"></div>
+  </div>
+</div>
 
 <!-- ── NEW/EDIT MODAL ── -->
 <div class="modal-overlay" id="editModal">
@@ -1149,6 +1208,198 @@ cadZone.addEventListener('drop', e => {
 document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 
 render();
+
+// ── CALENDAR ──────────────────────────────────────────────
+let calYear, calMonth, calSelectedDay = null;
+(function initCal() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+})();
+
+function switchView(v) {
+  const board = document.getElementById('board');
+  const calView = document.getElementById('calendar-view');
+  const seasonWrap = document.getElementById('season-filter-wrap');
+  document.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if (v === 'calendar') {
+    board.style.display = 'none';
+    calView.style.display = 'block';
+    seasonWrap.style.display = 'none';
+    renderCalendar();
+  } else {
+    board.style.display = '';
+    calView.style.display = 'none';
+    seasonWrap.style.display = '';
+  }
+}
+
+function calNav(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  calSelectedDay = null;
+  document.getElementById('cal-day-detail').style.display = 'none';
+  renderCalendar();
+}
+
+function getStyleEvents() {
+  // Returns array of { date (Date), type, label, style }
+  const events = [];
+  const now = new Date();
+  styles.forEach(s => {
+    // In-hands date
+    if (s.inhands) {
+      events.push({ date: new Date(s.inhands), type: 'inhands', label: `📦 ${s.name} — IN HANDS`, style: s });
+    }
+    // Sample milestones — estimate based on stage & lead time
+    if (s.ship) {
+      const ship = new Date(s.ship);
+      // 1st sample ~ 30 days before ship
+      const sample1 = new Date(ship); sample1.setDate(sample1.getDate() - 30);
+      if (s.samples?.['1st'] !== 'done') {
+        events.push({ date: sample1, type: 'sample', label: `🔬 ${s.name} — 1ST SAMPLE DUE`, style: s });
+      }
+      // Fit sample ~ 15 days before ship
+      const fit = new Date(ship); fit.setDate(fit.getDate() - 15);
+      if (s.samples?.fit !== 'done') {
+        events.push({ date: fit, type: 'sample', label: `✂️ ${s.name} — FIT SAMPLE DUE`, style: s });
+      }
+    }
+  });
+  return events;
+}
+
+function getStuckStyles() {
+  const now = new Date();
+  const DAY = 86400000;
+  return styles.filter(s => {
+    if (!s.stageChangedAt || s.stage === 'delivered') return false;
+    const daysStuck = Math.floor((now - s.stageChangedAt) / DAY);
+    return daysStuck >= 30;
+  }).map(s => {
+    const daysStuck = Math.floor((now - s.stageChangedAt) / 86400000);
+    return { style: s, daysStuck };
+  });
+}
+
+function renderCalendar() {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  document.getElementById('cal-month-title').textContent = `${MONTHS[calMonth]} ${calYear}`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  // Day headers
+  DAYS.forEach(d => {
+    const h = document.createElement('div');
+    h.className = 'cal-day-label-header';
+    h.textContent = d;
+    grid.appendChild(h);
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const allEvents = getStyleEvents();
+
+  // Event lookup by date string
+  const eventMap = {};
+  allEvents.forEach(e => {
+    const key = `${e.date.getFullYear()}-${e.date.getMonth()}-${e.date.getDate()}`;
+    if (!eventMap[key]) eventMap[key] = [];
+    eventMap[key].push(e);
+  });
+
+  // Prev month fill
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day-cell other-month';
+    cell.innerHTML = `<div class="cal-day-num">${daysInPrev - i}</div>`;
+    grid.appendChild(cell);
+  }
+
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = document.createElement('div');
+    const cellDate = new Date(calYear, calMonth, d);
+    const isToday = cellDate.getTime() === today.getTime();
+    cell.className = 'cal-day-cell' + (isToday ? ' today' : '');
+    const key = `${calYear}-${calMonth}-${d}`;
+    const dayEvents = eventMap[key] || [];
+    if (dayEvents.length) cell.classList.add('has-events');
+
+    let html = `<div class="cal-day-num">${d}</div>`;
+    dayEvents.slice(0, 2).forEach(e => {
+      const shortLabel = e.label.length > 22 ? e.label.slice(0,22)+'…' : e.label;
+      html += `<span class="cal-event-dot ${e.type}">${shortLabel}</span>`;
+    });
+    if (dayEvents.length > 2) html += `<span style="font-size:8px;color:var(--text-dim);font-family:'Space Mono',monospace">+${dayEvents.length-2} more</span>`;
+    cell.innerHTML = html;
+
+    if (dayEvents.length) {
+      cell.addEventListener('click', () => showDayDetail(d, dayEvents));
+    }
+    grid.appendChild(cell);
+  }
+
+  // Stuck styles sidebar
+  const stuckList = document.getElementById('cal-stuck-list');
+  const stuck = getStuckStyles();
+  if (stuck.length === 0) {
+    stuckList.innerHTML = '<div style="font-size:10px;color:var(--text-dim);font-family:\'Space Mono\',monospace;">No stuck styles ✓</div>';
+  } else {
+    stuckList.innerHTML = stuck.map(({style:s, daysStuck}) => `
+      <div class="cal-alert-item">
+        <span class="cal-alert-name">${s.name}</span>
+        <span class="cal-alert-sub">⚠ ${daysStuck} DAYS IN ${s.stage.toUpperCase()} · ${s.sku||s.season}</span>
+      </div>
+    `).join('');
+  }
+
+  // This month events sidebar
+  const monthEventsEl = document.getElementById('cal-month-events');
+  const thisMonthEvents = allEvents
+    .filter(e => e.date.getFullYear() === calYear && e.date.getMonth() === calMonth)
+    .sort((a,b) => a.date - b.date);
+  if (thisMonthEvents.length === 0) {
+    monthEventsEl.innerHTML = '<div style="font-size:10px;color:var(--text-dim);font-family:\'Space Mono\',monospace;">No milestones this month</div>';
+  } else {
+    monthEventsEl.innerHTML = thisMonthEvents.map(e => `
+      <div class="cal-event-item">
+        <span class="cal-event-name">${e.label}</span>
+        <span class="cal-event-sub">${e.date.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${e.style.capsule||e.style.season}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function showDayDetail(day, events) {
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const detail = document.getElementById('cal-day-detail');
+  const content = document.getElementById('cal-day-detail-content');
+  content.innerHTML = `
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:4px;color:var(--gold);margin-bottom:14px;">${MONTHS[calMonth]} ${day}, ${calYear}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${events.map(e => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--ink);border-left:3px solid ${e.type==='inhands'?'var(--gold)':'#3b82f6'};">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);">${e.label}</div>
+            <div style="font-size:9px;color:var(--text-dim);font-family:'Space Mono',monospace;margin-top:3px;">
+              ${e.style.sku||''} · ${e.style.capsule||''} · ${e.style.season} · Stage: ${e.style.stage.toUpperCase()}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  detail.style.display = 'block';
+}
 </script>
 </body>
 </html>
