@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sullen Artists" />
+  <meta name="theme-color" content="#080808" />
+  <title>Sullen Artist Discovery Tool</title>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #080808; color: #fff; font-family: 'Oswald', sans-serif; min-height: 100vh; }
+    @keyframes up { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    input { font-family: 'Oswald', sans-serif; color: #fff; }
+    input::placeholder { color: rgba(255,255,255,0.18); }
+    ::-webkit-scrollbar { height: 3px; width: 3px; }
+    ::-webkit-scrollbar-thumb { background: rgba(200,169,81,0.25); }
+    button { font-family: 'Oswald', sans-serif; cursor: pointer; }
+    a { font-family: 'Oswald', sans-serif; }
+
+    /* Title Bar */
+    #titlebar {
+      background: linear-gradient(180deg, #0d0d0d 0%, #080808 100%);
+      border-bottom: 1px solid rgba(200,169,81,0.15);
+      position: sticky; top: 0; z-index: 20;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    }
+    .gold-line { height: 2px; background: linear-gradient(90deg, transparent, #c8a951 30%, #e8d080 50%, #c8a951 70%, transparent); opacity: 0.7; }
+    .titlebar-inner { padding: 10px 16px; display: flex; align-items: center; gap: 14px; }
+    .logo-wrap { position: relative; flex-shrink: 0; }
+    .logo-diamond { width: 34px; height: 34px; border: 1.5px solid #c8a951; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; background: rgba(200,169,81,0.06); }
+    .logo-s { transform: rotate(-45deg); font-size: 13px; color: #c8a951; font-weight: 700; letter-spacing: -1px; }
+    .logo-dot { position: absolute; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; background: #c8a951; border-radius: 50%; }
+    .brand-text { flex: 1; min-width: 0; }
+    .brand-name { display: flex; align-items: baseline; gap: 8px; }
+    .brand-sullen { font-size: 18px; letter-spacing: 6px; text-transform: uppercase; color: #fff; font-weight: 600; line-height: 1; }
+    .brand-collective { font-size: 8px; letter-spacing: 3px; color: rgba(200,169,81,0.5); text-transform: uppercase; font-family: monospace; }
+    .brand-sub { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+    .brand-line { width: 16px; height: 1px; background: rgba(200,169,81,0.35); }
+    .brand-discovery { font-size: 7px; letter-spacing: 2.5px; color: rgba(255,255,255,0.25); text-transform: uppercase; font-family: monospace; }
+    .titlebar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    #passed-btn { padding: 4px 10px; border: 1px solid rgba(255,255,255,0.08); color: rgba(255,100,100,0.35); font-size: 7px; letter-spacing: 1.5px; font-family: monospace; background: transparent; transition: all 0.2s; display: none; }
+    #count-display { text-align: right; border-left: 1px solid rgba(255,255,255,0.06); padding-left: 10px; display: none; }
+    #count-num { font-size: 11px; color: rgba(255,255,255,0.2); font-family: monospace; line-height: 1; }
+    #count-label { font-size: 6px; color: rgba(200,169,81,0.4); font-family: monospace; letter-spacing: 1px; }
+    #count-strong { font-size: 6px; color: rgba(200,169,81,0.6); font-family: monospace; letter-spacing: 1px; display: none; }
+
+    /* Install tip */
+    #install-tip { background: rgba(200,169,81,0.06); border-bottom: 1px solid rgba(200,169,81,0.1); padding: 7px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12; }
+    #install-tip span.tip-text { font-size: 8px; color: rgba(200,169,81,0.6); font-family: monospace; line-height: 1.8; letter-spacing: 0.5px; }
+    #install-tip button { font-size: 8px; color: rgba(255,255,255,0.2); background: transparent; border: none; font-family: monospace; padding: 2px 4px; }
+
+    /* Search */
+    #search-bar { padding: 12px 16px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    #search-input { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(200,169,81,0.15); padding: 9px 12px; font-size: 12px; outline: none; margin-bottom: 12px; transition: border-color 0.2s; color: #fff; }
+    #search-input:focus { border-color: rgba(200,169,81,0.45); }
+
+    /* Category nav */
+    #cat-nav { border-bottom: 1px solid rgba(255,255,255,0.05); overflow-x: auto; }
+    .cat-nav-inner { display: flex; padding: 0 16px; min-width: max-content; }
+    .cat-btn { padding: 10px 14px; background: transparent; border: none; border-bottom: 2px solid transparent; color: rgba(255,255,255,0.28); font-size: 9px; letter-spacing: 2px; font-family: monospace; white-space: nowrap; transition: all 0.2s; }
+    .cat-btn.active { border-bottom-color: #c8a951; color: #c8a951; }
+
+    /* Subcategory nav */
+    #sub-nav { border-bottom: 1px solid rgba(255,255,255,0.04); background: rgba(255,255,255,0.015); animation: slideDown 0.2s ease; overflow-x: auto; display: none; }
+    .sub-nav-inner { display: flex; gap: 6px; padding: 10px 16px; min-width: max-content; }
+    .sub-btn { padding: 4px 10px; white-space: nowrap; transition: all 0.2s; background: transparent; border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.35); font-size: 8px; letter-spacing: 1.2px; font-family: monospace; }
+    .sub-btn.active { background: rgba(200,169,81,0.12); border-color: rgba(200,169,81,0.35); color: #c8a951; }
+
+    /* Pipeline filter */
+    #pipeline-bar { border-bottom: 1px solid rgba(255,255,255,0.04); overflow-x: auto; }
+    .pipeline-inner { display: flex; gap: 6px; padding: 8px 16px; min-width: max-content; align-items: center; }
+    .pipeline-label { font-size: 7px; letter-spacing: 2px; color: rgba(255,255,255,0.18); font-family: monospace; margin-right: 4px; }
+    .pipe-btn { padding: 3px 9px; font-size: 7px; letter-spacing: 1.5px; font-family: monospace; border: 1px solid rgba(255,255,255,0.07); background: transparent; color: rgba(255,255,255,0.25); white-space: nowrap; transition: all 0.2s; }
+    .pipe-btn.all-active { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.07); color: #fff; }
+
+    /* Content area */
+    #content { padding: 16px; }
+    #landing { padding: 40px 0; }
+    .landing-label { font-size: 8px; letter-spacing: 3px; color: rgba(255,255,255,0.15); font-family: monospace; margin-bottom: 20px; text-transform: uppercase; }
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+    .cat-card { padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); text-align: left; transition: all 0.2s; }
+    .cat-card:hover { border-color: rgba(200,169,81,0.25); background: rgba(200,169,81,0.04); }
+    .cat-card-icon { font-size: 16px; color: #c8a951; margin-bottom: 6px; }
+    .cat-card-name { font-size: 10px; letter-spacing: 2px; color: rgba(255,255,255,0.6); text-transform: uppercase; font-family: monospace; }
+    .cat-card-sub { font-size: 8px; color: rgba(255,255,255,0.2); font-family: monospace; margin-top: 3px; }
+    .all-artists-section { margin-top: 28px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 24px; }
+    .artist-chip { padding: 3px 8px; background: transparent; border: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.25); font-size: 8px; letter-spacing: 1px; font-family: monospace; transition: all 0.2s; }
+    .artist-chip:hover { color: #c8a951; border-color: rgba(200,169,81,0.25); }
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* Artist grid */
+    #results-header { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .results-path { font-size: 7px; letter-spacing: 2px; color: rgba(255,255,255,0.2); font-family: monospace; margin-bottom: 3px; }
+    .results-count { font-size: 8px; letter-spacing: 2px; color: rgba(255,255,255,0.18); font-family: monospace; }
+    .clear-btn { font-size: 8px; color: rgba(255,255,255,0.2); font-family: monospace; background: transparent; border: none; letter-spacing: 1px; }
+    .artist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)); gap: 10px; }
+    .artist-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); padding: 14px; display: flex; flex-direction: column; gap: 8px; animation: up 0.3s ease both; transition: border-color 0.3s; }
+    .artist-name { font-size: 13px; color: #fff; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.5px; }
+    .artist-handle { font-size: 10px; color: #c8a951; font-family: monospace; margin-top: 1px; }
+    .artist-location { font-size: 8px; color: rgba(255,255,255,0.2); margin-top: 1px; }
+    .verdict-badge { font-size: 7px; letter-spacing: 1.5px; font-family: monospace; padding: 2px 6px; white-space: nowrap; }
+    .style-badge { font-size: 7px; border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.25); padding: 1px 5px; font-family: monospace; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .score-track { flex: 1; height: 2px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+    .score-fill { height: 100%; transition: width 1s ease; }
+    .score-num { color: rgba(200,169,81,0.7); font-family: monospace; font-size: 10px; min-width: 28px; }
+    .artist-why { font-size: 11px; color: rgba(255,255,255,0.38); line-height: 1.65; }
+    .expand-section { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 9px; display: flex; flex-direction: column; gap: 6px; animation: up 0.2s ease; }
+    .expand-label { font-size: 7px; letter-spacing: 2px; color: #c8a951; font-family: monospace; }
+    .strength-item { display: flex; gap: 6px; }
+    .strength-arrow { color: #c8a951; font-size: 8px; margin-top: 2px; flex-shrink: 0; }
+    .strength-text { font-size: 10px; color: rgba(255,255,255,0.45); line-height: 1.5; }
+    .capsule-box { margin-top: 4px; background: rgba(200,169,81,0.05); border: 1px solid rgba(200,169,81,0.15); padding: 7px 9px; }
+    .capsule-label { font-size: 7px; letter-spacing: 1.5px; color: #c8a951; font-family: monospace; margin-bottom: 3px; }
+    .capsule-text { font-size: 10px; color: rgba(255,255,255,0.5); font-style: italic; line-height: 1.65; }
+    .status-section { margin-top: 4px; }
+    .status-label { font-size: 7px; letter-spacing: 2px; color: rgba(255,255,255,0.15); font-family: monospace; margin-bottom: 6px; }
+    .status-btns { display: flex; flex-wrap: wrap; gap: 4px; }
+    .status-btn { padding: 3px 8px; font-size: 7px; letter-spacing: 1.2px; font-family: monospace; border: 1px solid rgba(255,255,255,0.07); background: transparent; color: rgba(255,255,255,0.25); transition: all 0.15s; }
+    .tags-section { margin-top: 2px; }
+    .tags-label { font-size: 7px; letter-spacing: 2px; color: rgba(255,255,255,0.15); font-family: monospace; margin-bottom: 4px; }
+    .tags-wrap { display: flex; flex-wrap: wrap; gap: 3px; }
+    .tag-chip { font-size: 7px; padding: 1px 5px; border: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.2); font-family: monospace; }
+    /* Action buttons */
+    .card-actions { display: flex; gap: 5px; margin-top: auto; flex-wrap: wrap; }
+    .action-link { flex: 1 1 45px; text-align: center; padding: 6px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.35); font-size: 8px; letter-spacing: 2px; font-family: monospace; text-decoration: none; transition: all 0.2s; display: block; }
+    .action-link:hover { color: #c8a951; border-color: rgba(200,169,81,0.28); }
+    .action-link.dm { background: rgba(200,169,81,0.08); border-color: rgba(200,169,81,0.2); color: #c8a951; }
+    .action-link.dm:hover { background: rgba(200,169,81,0.18); }
+    .action-btn { flex: 1 1 50px; padding: 6px; font-size: 8px; letter-spacing: 2px; font-family: monospace; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.28); transition: all 0.2s; }
+    .action-btn.pass-btn { color: rgba(255,80,80,0.45); }
+    .action-btn.restore-btn { background: rgba(100,200,100,0.08); border-color: rgba(100,200,100,0.2); color: #7ecb7e; }
+    .action-btn.eval-btn { flex: 2 1 100px; background: rgba(200,169,81,0.07); border-color: rgba(200,169,81,0.18); color: #c8a951; }
+    .action-btn.eval-btn.open { background: rgba(200,169,81,0.14); border-color: rgba(200,169,81,0.35); }
+    .pipeline-badge { font-size: 7px; letter-spacing: 1.5px; padding: 1px 6px; margin-top: 4px; display: inline-block; font-family: monospace; }
+
+    /* Passed banner */
+    #passed-banner { margin-bottom: 12px; padding: 10px 14px; background: rgba(255,80,80,0.06); border: 1px solid rgba(255,80,80,0.15); display: none; align-items: center; justify-content: space-between; }
+    .passed-title { font-size: 9px; letter-spacing: 2px; color: #ff6b6b; font-family: monospace; }
+    .passed-desc { font-size: 8px; color: rgba(255,255,255,0.25); font-family: monospace; margin-top: 2px; }
+    #close-passed-btn { font-size: 7px; color: rgba(255,255,255,0.3); background: transparent; border: none; font-family: monospace; letter-spacing: 1px; }
+
+    /* No results */
+    #no-results { padding: 40px 0; text-align: center; display: none; }
+    .sullen-family-msg { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .sullen-family-title { font-size: 11px; color: #c8a951; font-family: monospace; letter-spacing: 2px; }
+    .sullen-family-sub { font-size: 10px; color: rgba(255,255,255,0.3); font-family: monospace; max-width: 280px; line-height: 1.8; }
+    .no-match-label { opacity: 0.3; font-size: 7px; letter-spacing: 3px; color: rgba(255,255,255,0.5); font-family: monospace; }
+  </style>
+</head>
+<body>
+
+<!-- TITLE BAR -->
+<div id="titlebar">
+  <div class="gold-line"></div>
+  <div class="titlebar-inner">
+    <div class="logo-wrap">
+      <div class="logo-diamond"><span class="logo-s">S</span></div>
+      <div class="logo-dot" style="top:-2px"></div>
+      <div class="logo-dot" style="bottom:-2px"></div>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">
+        <span class="brand-sullen">SULLEN</span>
+        <span class="brand-collective">ART COLLECTIVE</span>
+      </div>
+      <div class="brand-sub">
+        <div class="brand-line"></div>
+        <span class="brand-discovery">Artist Discovery</span>
+        <div class="brand-line"></div>
+      </div>
+    </div>
+    <div class="titlebar-right">
+      <button id="passed-btn" onclick="togglePassedView()">✕ PASSED (<span id="passed-count">0</span>)</button>
+      <div id="count-display">
+        <div id="count-num">0</div>
+        <div id="count-label">ARTISTS</div>
+        <div id="count-strong"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INSTALL TIP -->
+<div id="install-tip">
+  <span class="tip-text">
+    <span style="color:#c8a951;margin-right:6px">◆</span>
+    <span style="color:rgba(255,255,255,0.35)">DESKTOP:</span> Right-click tab → Pin Tab &nbsp;·&nbsp;
+    <span style="color:rgba(255,255,255,0.35)">iPHONE:</span> Safari Share → Add to Home Screen
+  </span>
+  <button onclick="document.getElementById('install-tip').style.display='none'">✕</button>
+</div>
+
+<!-- SEARCH -->
+<div id="search-bar">
+  <input id="search-input" type="text" placeholder="Search by name, style, or location..." oninput="onSearch(this.value)" />
+</div>
+
+<!-- CATEGORY NAV -->
+<div id="cat-nav">
+  <div class="cat-nav-inner" id="cat-nav-inner"></div>
+</div>
+
+<!-- SUBCATEGORY NAV -->
+<div id="sub-nav">
+  <div class="sub-nav-inner" id="sub-nav-inner"></div>
+</div>
+
+<!-- PIPELINE FILTER -->
+<div id="pipeline-bar">
+  <div class="pipeline-inner" id="pipeline-inner"></div>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+  <!-- Landing -->
+  <div id="landing">
+    <div class="landing-label">Browse by category</div>
+    <div class="cat-grid" id="landing-cats"></div>
+    <div class="all-artists-section">
+      <div class="landing-label">All <span id="total-count"></span> artists in database</div>
+      <div class="chip-wrap" id="artist-chips"></div>
+    </div>
+  </div>
+  <!-- Passed banner -->
+  <div id="passed-banner">
+    <div>
+      <div class="passed-title">✕ PASSED — NOT INTERESTED</div>
+      <div class="passed-desc">These artists have been marked as passed. Hit ↩ RESTORE on any card to bring them back.</div>
+    </div>
+    <button id="close-passed-btn" onclick="closePassedView()">CLOSE ✕</button>
+  </div>
+  <!-- Results header -->
+  <div id="results-header" style="display:none">
+    <div>
+      <div class="results-path" id="results-path"></div>
+      <div class="results-count" id="results-count"></div>
+    </div>
+    <button class="clear-btn" onclick="clearFilters()">✕ CLEAR</button>
+  </div>
+  <!-- No results -->
+  <div id="no-results">
+    <div class="sullen-family-msg" id="sullen-family-msg" style="display:none">
+      <div class="sullen-family-title">◆ SULLEN FAMILY ARTIST</div>
+      <div class="sullen-family-sub" id="sullen-family-text"></div>
+    </div>
+    <div class="no-match-label" id="no-match-label">NO ARTISTS IN THIS CATEGORY YET</div>
+  </div>
+  <!-- Artist grid -->
+  <div class="artist-grid" id="artist-grid"></div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const CATEGORIES = [
+  { id:"style", label:"BY STYLE", icon:"◈", subs:[
+    {id:"chicano",label:"Chicano / Black & Gray"},{id:"neo-trad",label:"Neo-Traditional"},
+    {id:"dark-illus",label:"Dark Illustrative"},{id:"blackwork",label:"Blackwork"},
+    {id:"realism",label:"Dark Realism"},{id:"traditional",label:"American Traditional"},
+  ]},
+  { id:"subject", label:"BY SUBJECT", icon:"◆", subs:[
+    {id:"skulls",label:"Skulls & Death"},{id:"religious",label:"Religious Iconography"},
+    {id:"portraits",label:"Dark Portraits"},{id:"nature",label:"Dark Nature / Animals"},
+    {id:"occult",label:"Occult & Esoteric"},{id:"lettering",label:"Old English / Lettering"},
+  ]},
+  { id:"region", label:"BY REGION", icon:"◉", subs:[
+    {id:"socal",label:"Southern California"},{id:"norcal",label:"Northern California"},
+    {id:"southwest",label:"Southwest / AZ / NV"},{id:"east-coast",label:"East Coast"},
+    {id:"international",label:"International"},{id:"travel",label:"Travel Artists"},
+  ]},
+  { id:"collab", label:"COLLAB TIER", icon:"▲", subs:[
+    {id:"tier1",label:"Tier 1 — Legends"},{id:"tier2",label:"Tier 2 — Rising"},
+    {id:"tier3",label:"Tier 3 — Underground"},{id:"emerging",label:"Emerging Artists"},
+  ]},
+];
+
+const PIPELINE = [
+  {id:"msg_sent",label:"MSG SENT",color:"#5b9bd5",bg:"rgba(91,155,213,0.1)",border:"rgba(91,155,213,0.3)"},
+  {id:"no_reply",label:"NO REPLY",color:"#888",bg:"rgba(136,136,136,0.08)",border:"rgba(136,136,136,0.2)"},
+  {id:"replied",label:"REPLIED",color:"#c8a951",bg:"rgba(200,169,81,0.1)",border:"rgba(200,169,81,0.3)"},
+  {id:"in_progress",label:"IN PROGRESS",color:"#e07b39",bg:"rgba(224,123,57,0.1)",border:"rgba(224,123,57,0.3)"},
+  {id:"submitted",label:"ART SUBMITTED",color:"#7ecb7e",bg:"rgba(126,203,126,0.1)",border:"rgba(126,203,126,0.3)"},
+];
+const PIPELINE_MAP = Object.fromEntries(PIPELINE.map(p=>[p.id,p]));
+
+const SULLEN_FAMILY = new Set([
+  "nikko hurtado","carlos torres","carl grace","chris showstopper","joseph haefs",
+  "aaron hodges","frankie mageno","levi murphy","sergo mazur","tom berg","bob tyrrell",
+  "steve soto","rich pineda","ryan mullins","mike devries","adam jackson",
+  "tommy lee wendtner","laky","daniel formentin","justice howard","mark longenecker",
+  "lio faamasino","rob struven","stepan negur","simone mariotti","timothy boor",
+  "timothy b boor","tony kelly","damian robertson","james strickland","jose perez jr",
+  "randy engelhard","ivano natale","jeremy hanna","mr. mago","mago","ryan smith",
+]);
+
+const ARTISTS_RAW = [
+  {name:"Mister Cartoon",handle:"@misterctoons",location:"Los Angeles, CA",style:"Chicano / SoCal black & gray",why:"The definitive SoCal Chicano tattoo artist — graffiti, lowriders, hip-hop, Old English. His iconography literally defines the aesthetic Sullen was built around.",score:10,verdict:"STRONG FIT",strengths:["Invented SoCal Chicano fine line style","Deep roots in hip-hop & street culture","OG clowns, angels, Old English lettering","Collabs: Nike, Stüssy, Louis Vuitton","851K+ Instagram"],capsule:"A Cartoon x Sullen drop would be landmark — Old English tees, sacred heart hoodies, cholo angel graphics.",tags:["chicano","blackwork","socal","lettering","religious","tier1","style","subject","region","collab"]},
+  {name:"Nikko Hurtado",handle:"@nikkohurtado",location:"Hesperia, CA",style:"Dark color realism / illustrative",why:"One of the biggest names in California tattooing — dark, ultra-detailed portrait work with 2M+ following. A Sullen collab would move units.",score:9,verdict:"STRONG FIT",strengths:["2M+ Instagram following","Dark detailed illustrative work","SoCal based","TV: LA Ink, Ink Master","Black Anchor studio owner"],capsule:"Hurtado x Sullen dark portrait capsule — death imagery in his signature hyper-detail style.",tags:["realism","dark-illus","portraits","socal","tier1","style","subject","region","collab"]},
+  {name:"Paul Booth",handle:"@paulbooth",location:"New York, NY",style:"Dark surrealism / horror",why:"Pioneer of dark art tattooing for 30+ years — his horror and psychological depth work is the gold standard that Sullen's aesthetic references.",score:9,verdict:"STRONG FIT",strengths:["Dark art OG / 30+ year career","Last Rites Tattoo Theatre founder","Horror and surrealism specialist","Deep underground credibility"],capsule:"Last Rites x Sullen — limited dark surrealist horror capsule, gallery-drop feel.",tags:["dark-illus","occult","skulls","east-coast","tier1","style","subject","region","collab"]},
+  {name:"Juliothemonster",handle:"@juliothemonster",location:"Los Angeles, CA",style:"Dark illustrative blackwork",why:"Dark illustrative blackwork with heavy SoCal street influence — skull-heavy, bold, high-contrast work that translates perfectly to apparel graphics.",score:9,verdict:"STRONG FIT",strengths:["Dark skull and horror iconography","Bold SoCal street aesthetic","High-contrast blackwork","LA authenticity"],capsule:"Death-themed capsule — grim reapers, skulls, hourglasses with SoCal lettering.",tags:["blackwork","dark-illus","skulls","socal","tier2","style","subject","region","collab"]},
+  {name:"Jesse Levitt",handle:"@jesselevitt",location:"USA",style:"Dark neo-traditional",why:"Dark neo-traditional heavy on death imagery — bold linework and deep shadows that translate clean to screenprint apparel without losing the edge.",score:8,verdict:"STRONG FIT",strengths:["Dark neo-trad specialist","Skull & death iconography","Bold high-contrast linework","Print-ready compositions"],capsule:"Neo-trad death symbols capsule — hourglasses, skulls, ravens, roses.",tags:["neo-trad","skulls","dark-illus","travel","tier2","style","subject","collab"]},
+  {name:"Rocky Darkroads",handle:"@rockydarkroads",location:"Los Angeles, CA",style:"Blackwork dark art",why:"Owner of Black Serpents tattoo studio — aggressive bold blackwork with dark themes. Exactly Sullen's visual language.",score:8,verdict:"STRONG FIT",strengths:["Blackwork specialist","Dark art focus","LA based","Studio owner credibility"],capsule:"Black Serpents x Sullen — serpent and skull motif capsule.",tags:["blackwork","skulls","socal","tier2","style","subject","region","collab"]},
+  {name:"Eye Diaz",handle:"@eyetattoo_",location:"Portland, OR",style:"Chicano black & gray realism",why:"Chicano black & gray realism with cinematic compositions and strong death symbolism — the kind of dark narrative art Sullen's audience responds to.",score:8,verdict:"STRONG FIT",strengths:["Chicano cultural roots","Black & gray mastery","Death and realism themes","Travel artist reach"],capsule:"Realism-meets-Chicano capsule — Virgin Mary, sacred hearts, skulls.",tags:["chicano","realism","religious","portraits","travel","tier2","style","subject","region","collab"]},
+  {name:"Jun Cha",handle:"@jun_cha_tattooer",location:"Los Angeles, CA",style:"Black & gray dark realism",why:"LA-based Korean-American artist with hauntingly detailed black & gray realism — dark portraits and figurative work with a cinematic quality Sullen's audience would connect with deeply.",score:8,verdict:"STRONG FIT",strengths:["Cinematic B&G realism","LA based","Dark portrait mastery","Strong Instagram presence"],capsule:"Dark portrait capsule — figurative realism meets Sullen streetwear.",tags:["realism","dark-illus","portraits","socal","tier2","style","subject","region","collab"]},
+  {name:"Grime",handle:"@grimeart",location:"UK",style:"Dark neo-traditional / illustrative",why:"UK's most recognizable dark neo-trad artist — bold animal and death imagery with a graphic quality that screams Sullen apparel.",score:8,verdict:"STRONG FIT",strengths:["Iconic dark neo-trad style","Bold graphic quality","Animal & death iconography","International credibility"],capsule:"Dark animals capsule — wolves, ravens, serpents in Grime's signature bold style.",tags:["neo-trad","dark-illus","nature","blackwork","international","tier2","style","subject","region","collab"]},
+  {name:"Rob Borbas",handle:"@grindesign_tattoo",location:"Budapest, Hungary",style:"Dark surrealist linework",why:"Intricate dark surrealist linework with mythological themes — unique enough to make a Sullen collab feel like a genuine international art drop.",score:7,verdict:"POSSIBLE FIT",strengths:["Surrealist dark art","Mythological themes","Ultra-fine detailed linework","International credibility"],capsule:"Dark mythology international art drop — Sullen x Grindesign.",tags:["dark-illus","occult","blackwork","international","tier2","style","subject","region","collab"]},
+  {name:"Ryan Murray",handle:"@ryanmrray",location:"Salem, MA",style:"Dark horror illustrative",why:"Salem-based dark art with atmospheric horror themes — strong death and occult imagery perfect for Sullen's darker capsule concepts.",score:7,verdict:"POSSIBLE FIT",strengths:["Dark atmospheric art","Horror and occult themes","Narrative compositions","Unique Salem aesthetic"],capsule:"Occult capsule — pentagrams, reapers, dark sacred imagery.",tags:["dark-illus","occult","skulls","east-coast","tier2","style","subject","region","collab"]},
+  {name:"Eliot Kohek",handle:"@eliot.kohek",location:"France",style:"Dark illustrative",why:"European dark illustrative with heavy shadow work and occult themes — adds international prestige and a distinctly European darkness to a Sullen capsule.",score:7,verdict:"POSSIBLE FIT",strengths:["Occult dark art","Heavy shadow work","European credibility","Unique visual language"],capsule:"Euro-dark art capsule — gothic European iconography meets SoCal street.",tags:["dark-illus","occult","blackwork","international","tier2","style","subject","region","collab"]},
+  {name:"Matthew Murray",handle:"@mattwmurray",location:"Salem, MA",style:"Dark illustrative",why:"Twin to Ryan Murray — equally powerful dark illustrative portfolio. A dual-artist Sullen collab could be a unique editorial release.",score:7,verdict:"POSSIBLE FIT",strengths:["Dark art mastery","Horror imagery","Strong atmospheric compositions","Dual-artist concept"],capsule:"Twin dark art drop — mirror-image matching designs, collector's edition concept.",tags:["dark-illus","occult","skulls","east-coast","tier2","style","subject","region","collab"]},
+  {name:"Dany Vazquez",handle:"@danygray_tattoo",location:"Los Angeles / Miami",style:"Chicano black & gray",why:"15 years of Chicano tattooing between LA and Miami — proven black & gray skill with deep cultural ties to the aesthetic Sullen embodies.",score:7,verdict:"POSSIBLE FIT",strengths:["15 years experience","LA & Miami market reach","Chicano specialist","Consistent quality"],capsule:"Classic SoCal heritage capsule — timeless Chicano motifs.",tags:["chicano","realism","religious","socal","travel","tier2","style","subject","region","collab"]},
+  {name:"Liz Campos",handle:"@ironxliz",location:"Los Angeles, CA",style:"Chicano blackwork dark art",why:"Chicanx blackwork in LA with skull and dark art focus — a female perspective adds a fresh angle to Sullen's traditionally male-centric collabs.",score:7,verdict:"POSSIBLE FIT",strengths:["Chicano dark art","Skull iconography","LA based","Fresh female perspective in the space"],capsule:"Dark feminine iconography capsule — a new direction for Sullen.",tags:["chicano","blackwork","skulls","socal","tier3","style","subject","region","collab"]},
+  {name:"Victor Chil",handle:"@victorchil",location:"Spain",style:"Neo-traditional dark color",why:"Spanish neo-traditional with a dark palette and strong ornamental composition — bold enough for apparel, distinctive enough to make a Sullen collab stand out internationally.",score:7,verdict:"POSSIBLE FIT",strengths:["Bold color neo-trad","Strong composition","International cachet","Dark ornamental work"],capsule:"International neo-trad capsule — Sullen goes European.",tags:["neo-trad","dark-illus","nature","international","tier2","style","subject","region","collab"]},
+  {name:"Hannah Flowers",handle:"@hannahflowerstattoo",location:"USA",style:"Dark American Traditional",why:"Bold dark American traditional with death imagery, ravens, and gothic flora — a female traditional artist bringing fresh energy to a style Sullen has always leaned into.",score:7,verdict:"POSSIBLE FIT",strengths:["Dark American traditional","Death & nature iconography","Bold flat color","Gender-diverse collab"],capsule:"Dark traditional capsule — ravens, daggers, roses, hourglasses.",tags:["traditional","dark-illus","nature","skulls","east-coast","tier3","style","subject","region","collab"]},
+  {name:"Megan Massacre",handle:"@meganmassacre",location:"New York, NY",style:"Neo-traditional color",why:"High-profile neo-traditional artist with major TV presence — her bold color style and mainstream reach could bridge Sullen into new female demographics.",score:6,verdict:"POSSIBLE FIT",strengths:["Major TV presence (NY Ink)","High mainstream reach","Bold neo-trad color","Female demographic bridge"],capsule:"Color-forward neo-trad capsule — bright bold prints for a new Sullen audience.",tags:["neo-trad","portraits","east-coast","tier1","style","subject","region","collab"]},
+  {name:"Steve Butcher",handle:"@stevebutcher_",location:"New Zealand",style:"Black & gray hyper-realism",why:"World-renowned B&G hyperrealism specialist — his dark portrait work is technically unmatched and would bring serious international credibility to a Sullen art drop.",score:7,verdict:"POSSIBLE FIT",strengths:["World-class B&G realism","International recognition","Dark portrait mastery","High collector appeal"],capsule:"Hyperrealism art drop — ultra-detailed portrait series, limited edition.",tags:["realism","portraits","dark-illus","international","tier1","style","subject","region","collab"]},
+  {name:"Danielle Rose",handle:"@daniellerosetattoo",location:"California",style:"Dark illustrative / blackwork",why:"California-based dark illustrative blackwork with strong occult and nature themes — emerges from the same SoCal underground scene that Sullen was built in.",score:7,verdict:"POSSIBLE FIT",strengths:["CA based","Dark occult themes","Blackwork specialist","Underground credibility"],capsule:"Dark nature & occult capsule — moths, serpents, sacred geometry.",tags:["blackwork","dark-illus","occult","nature","socal","tier3","emerging","style","subject","region","collab"]},
+];
+
+const ARTISTS = ARTISTS_RAW.filter(a => !SULLEN_FAMILY.has(a.name.toLowerCase()));
+
+const VC = {
+  "STRONG FIT":   {color:"#c8a951",border:"rgba(200,169,81,0.4)",bg:"rgba(200,169,81,0.07)",icon:"◆"},
+  "POSSIBLE FIT": {color:"#9b8fe0",border:"rgba(155,143,224,0.35)",bg:"rgba(155,143,224,0.06)",icon:"◈"},
+  "NOT A FIT":    {color:"#c0392b",border:"rgba(192,57,43,0.3)",bg:"rgba(192,57,43,0.05)",icon:"✕"},
+};
+
+const DM_MSG = `Hey! We're Sullen Art Collective — a tattoo lifestyle brand out of Southern California since 2001. We love your work and would love to talk about featuring your art on a Sullen tee. Would you be open to a collab? 🤙`;
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let state = {
+  activeCat: null,
+  activeSub: null,
+  searchQ: "",
+  expanded: {},
+  passed: new Set(),
+  showPassed: false,
+  pipeline: {},
+  pipelineFilter: null,
+  copyFlash: null,
+};
+
+// ── STORAGE (localStorage fallback since window.storage is artifact-only) ────
+function saveState() {
+  try {
+    localStorage.setItem("sullen_passed", JSON.stringify([...state.passed]));
+    localStorage.setItem("sullen_pipeline", JSON.stringify(state.pipeline));
+  } catch(e) {}
+}
+function loadState() {
+  try {
+    const p = localStorage.getItem("sullen_passed");
+    if (p) state.passed = new Set(JSON.parse(p));
+    const pl = localStorage.getItem("sullen_pipeline");
+    if (pl) state.pipeline = JSON.parse(pl);
+  } catch(e) {}
+}
+
+// ── FILTER ────────────────────────────────────────────────────────────────────
+function filterByTag(catId, subId) {
+  if (!subId) return ARTISTS;
+  return ARTISTS.filter(a => a.tags.includes(subId));
+}
+
+function getDisplayArtists() {
+  const q = state.searchQ.trim().toLowerCase();
+  if (q.length > 1) {
+    return ARTISTS.filter(a =>
+      a.name.toLowerCase().includes(q) ||
+      a.style.toLowerCase().includes(q) ||
+      a.location.toLowerCase().includes(q) ||
+      a.tags.some(t => t.includes(q))
+    );
+  }
+  if (state.activeSub) return filterByTag(state.activeCat, state.activeSub);
+  if (state.activeCat) return filterByTag(state.activeCat, null);
+  return [];
+}
+
+function getFiltered() {
+  let display = getDisplayArtists();
+  if (state.showPassed) return ARTISTS.filter(a => state.passed.has(a.handle));
+  return display
+    .filter(a => !state.passed.has(a.handle))
+    .filter(a => state.pipelineFilter ? state.pipeline[a.handle] === state.pipelineFilter : true);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  const filtered = getFiltered();
+  const strongCount = filtered.filter(a => a.verdict === "STRONG FIT").length;
+  const q = state.searchQ.trim().toLowerCase();
+  const hasQuery = q.length > 1;
+  const hasFilter = state.activeCat || hasQuery || state.showPassed;
+
+  // Title bar counts
+  const passedBtn = document.getElementById("passed-btn");
+  const passedCount = document.getElementById("passed-count");
+  passedBtn.style.display = state.passed.size > 0 ? "block" : "none";
+  if (state.showPassed) {
+    passedBtn.style.background = "rgba(255,80,80,0.15)";
+    passedBtn.style.borderColor = "rgba(255,80,80,0.35)";
+    passedBtn.style.color = "#ff6b6b";
+  } else {
+    passedBtn.style.background = "transparent";
+    passedBtn.style.borderColor = "rgba(255,255,255,0.08)";
+    passedBtn.style.color = "rgba(255,100,100,0.35)";
+  }
+  passedCount.textContent = state.passed.size;
+
+  const countDisp = document.getElementById("count-display");
+  if (filtered.length > 0) {
+    countDisp.style.display = "block";
+    document.getElementById("count-num").textContent = filtered.length;
+    const strongEl = document.getElementById("count-strong");
+    if (strongCount > 0) { strongEl.style.display = "block"; strongEl.textContent = strongCount + " STRONG"; }
+    else strongEl.style.display = "none";
+  } else countDisp.style.display = "none";
+
+  // Landing vs results
+  const landing = document.getElementById("landing");
+  const grid = document.getElementById("artist-grid");
+  const rh = document.getElementById("results-header");
+  const passedBanner = document.getElementById("passed-banner");
+  const noResults = document.getElementById("no-results");
+
+  landing.style.display = (!hasFilter && !state.showPassed) ? "block" : "none";
+  passedBanner.style.display = state.showPassed ? "flex" : "none";
+
+  // Category nav
+  renderCatNav();
+  renderSubNav();
+  renderPipelineBar();
+
+  // Results
+  const sullenMatch = hasQuery ? [...SULLEN_FAMILY].filter(n => n.includes(q)) : [];
+  const showGrid = filtered.length > 0;
+  const showNoResults = hasFilter && !showGrid && !state.showPassed;
+
+  noResults.style.display = (showNoResults || (state.showPassed && filtered.length === 0)) ? "block" : "none";
+  if (showNoResults) {
+    const sfMsg = document.getElementById("sullen-family-msg");
+    const noMatchLabel = document.getElementById("no-match-label");
+    if (sullenMatch.length > 0) {
+      sfMsg.style.display = "flex"; noMatchLabel.style.display = "none";
+      document.getElementById("sullen-family-text").textContent =
+        sullenMatch.map(n => n.split(' ').map(w => w[0].toUpperCase()+w.slice(1)).join(' ')).join(', ') +
+        " is already part of the Sullen Art Collective and is excluded from discovery results.";
+    } else {
+      sfMsg.style.display = "none"; noMatchLabel.style.display = "block";
+    }
+  }
+
+  rh.style.display = (showGrid && hasFilter) ? "flex" : "none";
+  if (showGrid && hasFilter) {
+    const cat = CATEGORIES.find(c => c.id === state.activeCat);
+    const sub = cat?.subs.find(s => s.id === state.activeSub);
+    document.getElementById("results-path").textContent = sub ? `${cat.label} → ${sub.label}` : "";
+    document.getElementById("results-count").textContent =
+      `${filtered.length} ARTISTS · ${strongCount} STRONG FIT · ${filtered.filter(a=>a.verdict==="POSSIBLE FIT").length} POSSIBLE`;
+  }
+
+  // Artist grid
+  if (showGrid) {
+    const sorted = [...filtered].sort((a,b) => b.score - a.score);
+    grid.innerHTML = sorted.map((a, i) => renderCard(a, i)).join("");
+  } else {
+    grid.innerHTML = "";
+  }
+}
+
+function renderCard(a, i) {
+  const vc = VC[a.verdict] || VC["POSSIBLE FIT"];
+  const open = state.expanded[a.handle];
+  const pl = state.pipeline[a.handle];
+  const plData = pl ? PIPELINE_MAP[pl] : null;
+  const scoreColor = a.score >= 8 ? "linear-gradient(90deg,#c8a951,#e8d080)" : a.score >= 6 ? "linear-gradient(90deg,#9b8fe0,#bbb0f0)" : "linear-gradient(90deg,#8b2222,#c0392b)";
+  const borderColor = open ? vc.border : "rgba(255,255,255,0.07)";
+
+  const pipelineBadge = plData ? `<div class="pipeline-badge" style="color:${plData.color};background:${plData.bg};border:1px solid ${plData.border}">● ${plData.label}</div>` : "";
+
+  const expandHTML = open ? `
+    <div class="expand-section">
+      <div class="expand-label">STRENGTHS</div>
+      ${(a.strengths||[]).map(s=>`<div class="strength-item"><span class="strength-arrow">▸</span><span class="strength-text">${s}</span></div>`).join("")}
+      ${a.capsule ? `<div class="capsule-box"><div class="capsule-label">CAPSULE CONCEPT</div><div class="capsule-text">${a.capsule}</div></div>` : ""}
+      <div class="status-section">
+        <div class="status-label">OUTREACH STATUS</div>
+        <div class="status-btns">
+          ${PIPELINE.map(p=>{
+            const active = state.pipeline[a.handle] === p.id;
+            return `<button class="status-btn" onclick="setStatus('${a.handle}','${p.id}')" style="${active?`border:1px solid ${p.border};background:${p.bg};color:${p.color}`:""}">${active?"● ":"○ "}${p.label}</button>`;
+          }).join("")}
+        </div>
+      </div>
+      <div class="tags-section">
+        <div class="tags-label">TAGS</div>
+        <div class="tags-wrap">
+          ${a.tags.filter(t=>!["style","subject","region","collab"].includes(t)).map(t=>`<span class="tag-chip">${t}</span>`).join("")}
+        </div>
+      </div>
+    </div>
+  ` : "";
+
+  const copyLabel = state.copyFlash === a.handle ? "✓ COPIED" : "⎘ MSG";
+  const copyStyle = state.copyFlash === a.handle ? "background:rgba(100,200,100,0.15);border:1px solid rgba(100,200,100,0.35);color:#7ecb7e;" : "";
+
+  return `
+  <div class="artist-card" style="border-color:${borderColor};animation-delay:${Math.min(i,8)*0.04}s">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+      <div style="min-width:0">
+        <div class="artist-name">${a.name}</div>
+        <div class="artist-handle">${a.handle}</div>
+        ${a.location ? `<div class="artist-location">${a.location}</div>` : ""}
+        ${pipelineBadge}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+        <span class="verdict-badge" style="color:${vc.color};background:${vc.bg};border:1px solid ${vc.border}">${vc.icon} ${a.verdict}</span>
+        <span class="style-badge">${a.style}</span>
+      </div>
+    </div>
+    <div class="score-bar-wrap">
+      <div class="score-track"><div class="score-fill" style="width:${a.score*10}%;background:${scoreColor}"></div></div>
+      <span class="score-num">${a.score}/10</span>
+    </div>
+    <p class="artist-why">${a.why}</p>
+    ${expandHTML}
+    <div class="card-actions">
+      <a href="https://instagram.com/${a.handle.replace('@','')}" target="_blank" rel="noopener noreferrer" class="action-link">↗ IG</a>
+      <a href="https://ig.me/m/${a.handle.replace('@','')}" target="_blank" rel="noopener noreferrer" class="action-link dm">✉ DM</a>
+      <button class="action-btn" style="${copyStyle}" onclick="copyDM('${a.handle}')">${copyLabel}</button>
+      <button class="action-btn ${state.showPassed ? 'restore-btn' : 'pass-btn'}" onclick="${state.showPassed ? `restoreArtist('${a.handle}')` : `markPassed('${a.handle}')`}">${state.showPassed ? "↩ RESTORE" : "✕ PASS"}</button>
+      <button class="action-btn eval-btn ${open ? 'open' : ''}" onclick="toggleExpand('${a.handle}')">${open ? "▲ COLLAPSE" : "◆ FULL EVAL"}</button>
+    </div>
+  </div>`;
+}
+
+function renderCatNav() {
+  const inner = document.getElementById("cat-nav-inner");
+  inner.innerHTML = CATEGORIES.map(cat => `
+    <button class="cat-btn ${state.activeCat === cat.id ? 'active' : ''}" onclick="selectCat('${cat.id}')">
+      <span style="margin-right:5px;opacity:0.6">${cat.icon}</span>${cat.label}
+    </button>
+  `).join("");
+}
+
+function renderSubNav() {
+  const nav = document.getElementById("sub-nav");
+  const inner = document.getElementById("sub-nav-inner");
+  if (!state.activeCat) { nav.style.display = "none"; return; }
+  nav.style.display = "block";
+  const cat = CATEGORIES.find(c => c.id === state.activeCat);
+  inner.innerHTML = cat.subs.map(sub => {
+    const count = filterByTag(state.activeCat, sub.id).length;
+    return `<button class="sub-btn ${state.activeSub === sub.id ? 'active' : ''}" onclick="selectSub('${sub.id}')">
+      ${sub.label}${count > 0 ? ` <span style="opacity:0.5;font-size:7px">(${count})</span>` : ""}
+    </button>`;
+  }).join("");
+}
+
+function renderPipelineBar() {
+  const inner = document.getElementById("pipeline-inner");
+  inner.innerHTML = `<span class="pipeline-label">OUTREACH</span>
+    <button class="pipe-btn ${!state.pipelineFilter ? 'all-active' : ''}" onclick="setPipelineFilter(null)">ALL</button>
+    ${PIPELINE.map(p => {
+      const count = Object.values(state.pipeline).filter(s=>s===p.id).length;
+      const active = state.pipelineFilter === p.id;
+      return `<button class="pipe-btn" onclick="setPipelineFilter('${p.id}')"
+        style="${active ? `border:1px solid ${p.border};background:${p.bg};color:${p.color}` : ""}">
+        ${p.label}${count > 0 ? ` <span style="opacity:0.7;font-size:6px">(${count})</span>` : ""}
+      </button>`;
+    }).join("")}`;
+}
+
+function renderLanding() {
+  // Category cards
+  const landingCats = document.getElementById("landing-cats");
+  landingCats.innerHTML = CATEGORIES.map(cat => `
+    <button class="cat-card" onclick="selectCat('${cat.id}')">
+      <div class="cat-card-icon">${cat.icon}</div>
+      <div class="cat-card-name">${cat.label}</div>
+      <div class="cat-card-sub">${cat.subs.length} subcategories</div>
+    </button>
+  `).join("");
+
+  // Artist chips
+  document.getElementById("total-count").textContent = ARTISTS.length;
+  const chips = document.getElementById("artist-chips");
+  chips.innerHTML = [...ARTISTS].sort((a,b)=>b.score-a.score).map(a =>
+    `<button class="artist-chip" onclick="searchFor('${a.name}')">${a.name}</button>`
+  ).join("");
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function selectCat(catId) {
+  if (state.activeCat === catId) { state.activeCat = null; state.activeSub = null; }
+  else { state.activeCat = catId; state.activeSub = null; }
+  state.expanded = {};
+  state.searchQ = "";
+  document.getElementById("search-input").value = "";
+  render();
+}
+
+function selectSub(subId) {
+  state.activeSub = state.activeSub === subId ? null : subId;
+  state.expanded = {};
+  render();
+}
+
+function onSearch(val) {
+  state.searchQ = val;
+  state.activeCat = null;
+  state.activeSub = null;
+  render();
+}
+
+function searchFor(name) {
+  state.searchQ = name;
+  document.getElementById("search-input").value = name;
+  state.activeCat = null;
+  state.activeSub = null;
+  render();
+}
+
+function clearFilters() {
+  state.activeCat = null;
+  state.activeSub = null;
+  state.searchQ = "";
+  document.getElementById("search-input").value = "";
+  render();
+}
+
+function toggleExpand(handle) {
+  state.expanded[handle] = !state.expanded[handle];
+  render();
+}
+
+function copyDM(handle) {
+  navigator.clipboard.writeText(DM_MSG).then(() => {
+    state.copyFlash = handle;
+    render();
+    setTimeout(() => { state.copyFlash = null; render(); }, 2000);
+  });
+}
+
+function markPassed(handle) {
+  state.passed.add(handle);
+  saveState();
+  render();
+}
+
+function restoreArtist(handle) {
+  state.passed.delete(handle);
+  saveState();
+  render();
+}
+
+function togglePassedView() {
+  state.showPassed = !state.showPassed;
+  if (state.showPassed) { state.activeCat = null; state.activeSub = null; state.searchQ = ""; document.getElementById("search-input").value = ""; }
+  render();
+}
+
+function closePassedView() {
+  state.showPassed = false;
+  render();
+}
+
+function setStatus(handle, statusId) {
+  if (state.pipeline[handle] === statusId) delete state.pipeline[handle];
+  else state.pipeline[handle] = statusId;
+  saveState();
+  render();
+}
+
+function setPipelineFilter(statusId) {
+  state.pipelineFilter = state.pipelineFilter === statusId ? null : statusId;
+  render();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadState();
+renderLanding();
+render();
+</script>
+</body>
+</html>
