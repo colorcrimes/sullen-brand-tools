@@ -619,6 +619,201 @@ window.closeArchiveModal=function(e){
   if(!e||e.target===document.getElementById('archiveOverlay'))
     document.getElementById('archiveOverlay').classList.remove('open');
 };
+
+// ── ARCHIVE UPLOAD ──
+var arcFiles = [];
+
+window.resetArcModal = function() {
+  arcFiles = [];
+  document.getElementById('arcBatchItems').innerHTML = '';
+  document.getElementById('arcBatchList').style.display = 'none';
+  document.getElementById('arcDropSection').style.display = 'block';
+  document.getElementById('arcMetaSection').style.display = 'none';
+  document.getElementById('arcProgressWrap').style.display = 'none';
+  document.getElementById('arcProgressBar').style.width = '0%';
+  document.getElementById('arcStatus').textContent = '';
+  document.getElementById('arcSaveBtn').textContent = 'UPLOAD';
+  document.getElementById('arcSaveBtn').disabled = false;
+  document.getElementById('arcNotes').value = '';
+  document.getElementById('arcYear').value = new Date().getFullYear();
+  document.querySelectorAll('.arc-tag.active').forEach(el => el.classList.remove('active'));
+};
+
+window.toggleArcTag = function(el) { el.classList.toggle('active'); };
+
+window.arcConfirmNewCapsule = function() {
+  var name = document.getElementById('arcNewCapsuleName').value.trim();
+  if (!name) return;
+  var sel = document.getElementById('arcCapsule');
+  var opt = document.createElement('option');
+  opt.value = name; opt.textContent = name;
+  sel.insertBefore(opt, sel.querySelector('option[value="_new"]'));
+  sel.value = name;
+  document.getElementById('arcNewCapsuleRow').style.display = 'none';
+};
+
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'arcCapsule') {
+    document.getElementById('arcNewCapsuleRow').style.display = e.target.value === '_new' ? 'flex' : 'none';
+  }
+});
+
+function cleanFileName(name) {
+  return name.replace(/[-_]/g,' ').replace(/\.\w+$/, '').replace(/\b\w/g, c => c.toUpperCase()).trim();
+}
+
+window.renderArcBatchList = function() {
+  var el = document.getElementById('arcBatchItems');
+  el.innerHTML = arcFiles.map(function(f, i) {
+    return '<div class="batch-item"><span>' + f.name + '</span><button onclick="window.removeArcFile(' + i + ')">✕</button></div>';
+  }).join('');
+  document.getElementById('arcBatchList').style.display = arcFiles.length ? 'block' : 'none';
+  document.getElementById('arcMetaSection').style.display = arcFiles.length ? 'block' : 'none';
+};
+
+window.removeArcFile = function(i) {
+  arcFiles.splice(i, 1);
+  window.renderArcBatchList();
+  if (!arcFiles.length) {
+    document.getElementById('arcDropSection').style.display = 'block';
+    document.getElementById('arcMetaSection').style.display = 'none';
+  }
+};
+
+function compressImg(dataURL, maxPx, q) {
+  return new Promise(function(res) {
+    var img = new Image();
+    img.onload = function() {
+      var sc = Math.min(1, maxPx / Math.max(img.width, img.height));
+      var c = document.createElement('canvas');
+      c.width = Math.round(img.width * sc);
+      c.height = Math.round(img.height * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', q || 0.75));
+    };
+    img.src = dataURL;
+  });
+}
+
+function readFileAsDataURL(f) {
+  return new Promise(function(res, rej) {
+    var r = new FileReader();
+    r.onload = function(e) { res(e.target.result); };
+    r.onerror = rej;
+    r.readAsDataURL(f);
+  });
+}
+
+// Drop zone wiring (run after DOM ready)
+(function() {
+  var dz = document.getElementById('dropZone');
+  var fi = document.getElementById('arcFileInput');
+  if (!dz || !fi) return;
+  dz.addEventListener('click', function() { fi.click(); });
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.style.borderColor = '#c0392b'; });
+  dz.addEventListener('dragleave', function() { dz.style.borderColor = ''; });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault(); dz.style.borderColor = '';
+    handleArcFiles(Array.from(e.dataTransfer.files));
+  });
+  fi.addEventListener('change', function() {
+    handleArcFiles(Array.from(fi.files));
+    fi.value = '';
+  });
+})();
+
+function handleArcFiles(files) {
+  var imgs = files.filter(function(f) { return f.type.startsWith('image/'); });
+  if (!imgs.length) return;
+  arcFiles = arcFiles.concat(imgs.map(function(f) {
+    return { file: f, name: cleanFileName(f.name), originalName: f.name };
+  }));
+  document.getElementById('arcDropSection').style.display = 'none';
+  window.renderArcBatchList();
+}
+
+window.saveArchive = async function() {
+  if (!arcFiles.length) { alert('No files selected.'); return; }
+  var db = window._fsDb, storageFn = window._fsStorage, refFn = window._fsRef,
+      uploadFn = window._fsUpload, getDLFn = window._fsGetDL,
+      docFn = window._fsDoc, getFn = window._fsGetDoc, setFn = window._fsSetDoc;
+
+  if (!db) { alert('Firebase not ready. Please refresh.'); return; }
+
+  var btn = document.getElementById('arcSaveBtn');
+  btn.disabled = true; btn.textContent = 'UPLOADING...';
+  document.getElementById('arcProgressWrap').style.display = 'block';
+  document.getElementById('arcStatus').textContent = '';
+
+  var capsule = document.getElementById('arcCapsule').value;
+  if (capsule === '_new') capsule = document.getElementById('arcNewCapsuleName').value.trim() || 'Uncategorized';
+  var season = document.getElementById('arcSeason').value;
+  var year = document.getElementById('arcYear').value || new Date().getFullYear();
+  var notes = document.getElementById('arcNotes').value.trim();
+  var tags = Array.from(document.querySelectorAll('.arc-tag.active')).map(function(el){ return el.dataset.tag; });
+
+  var uploaded = [];
+  for (var i = 0; i < arcFiles.length; i++) {
+    var pct = Math.round((i / arcFiles.length) * 90);
+    document.getElementById('arcProgressBar').style.width = pct + '%';
+    document.getElementById('arcStatus').textContent = 'Uploading ' + (i+1) + ' of ' + arcFiles.length + '...';
+    try {
+      var dataURL = await readFileAsDataURL(arcFiles[i].file);
+      var compressed = await compressImg(dataURL, 1200, 0.82);
+      var blob = await (await fetch(compressed)).blob();
+      var fname = 'archive/' + Date.now() + '_' + arcFiles[i].originalName.replace(/[^a-zA-Z0-9.]/g,'_');
+      var url;
+      if (storageFn && refFn && uploadFn && getDLFn) {
+        var storageRef = refFn(storageFn, fname);
+        await uploadFn(storageRef, blob);
+        url = await getDLFn(storageRef);
+      } else {
+        // fallback: base64 store (limited)
+        url = compressed;
+      }
+      uploaded.push({
+        id: 'arc_' + Date.now() + '_' + i,
+        name: arcFiles[i].name,
+        src: url,
+        capsule: capsule,
+        season: season,
+        year: parseInt(year),
+        notes: notes,
+        tags: tags,
+        date: new Date().toISOString(),
+        source: 'archive'
+      });
+    } catch(err) {
+      console.error('Upload error:', err);
+      document.getElementById('arcStatus').textContent = 'Error on ' + arcFiles[i].name + ': ' + err.message;
+    }
+  }
+
+  // Save to Firestore archive/__index
+  if (uploaded.length && docFn && getFn && setFn) {
+    document.getElementById('arcStatus').textContent = 'Saving to database...';
+    try {
+      var idxDoc = docFn(db, 'archive', '__index');
+      var snap = await getFn(idxDoc);
+      var existing = snap.exists() ? (snap.data().items || []) : [];
+      await setFn(idxDoc, { items: existing.concat(uploaded) });
+      document.getElementById('arcProgressBar').style.width = '100%';
+      document.getElementById('arcStatus').textContent = uploaded.length + ' CAD' + (uploaded.length>1?'s':'') + ' saved!';
+      btn.textContent = 'DONE ✓';
+      setTimeout(function() {
+        document.getElementById('archiveOverlay').classList.remove('open');
+        window.resetArcModal();
+      }, 1500);
+    } catch(err) {
+      document.getElementById('arcStatus').textContent = 'Save error: ' + err.message;
+      btn.disabled = false; btn.textContent = 'RETRY';
+    }
+  } else if (!docFn) {
+    document.getElementById('arcStatus').textContent = 'DB not ready';
+    btn.disabled = false; btn.textContent = 'UPLOAD';
+  }
+};
+
 window.cancelLbEdit=function(){
   var p=document.getElementById('lbEditPanel'),
       dl=document.getElementById('lbDlBtn'),
