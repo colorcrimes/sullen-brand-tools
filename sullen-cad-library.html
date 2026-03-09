@@ -441,6 +441,7 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
 </div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
 import { getFirestore, doc, onSnapshot, setDoc, getDoc, updateDoc }
   from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL }
