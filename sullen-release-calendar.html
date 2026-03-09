@@ -2762,6 +2762,7 @@ function closeUpload() {
 let detailKey = null, detailPid = null;
 
 function openDetail(key, pid) {
+  window.detailKey = key; window.detailPid = pid;
   detailKey = key; detailPid = pid;
   const p = (S.products[key] || []).find(x => x.id === pid);
   if (!p) return;
@@ -2847,7 +2848,7 @@ function closeDetailModal() {
 }
 function detailEditStatus() {
   closeDetailModal();
-  if (detailKey && detailPid) openLcModal(detailKey, detailPid);
+  if (window.detailKey && window.detailPid) openLcModal(window.detailKey, window.detailPid);
 }
 
 // ——— Detail tab switching ———
