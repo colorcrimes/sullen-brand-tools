@@ -885,5 +885,17 @@ window.saveLbEdit=function(){
   });
 };
 </script>
+
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-storage.js";
+const FC2={apiKey:"AIzaSyDd5VhYxpbfI2vptOA5UadZyghRzEO-HTI",authDomain:"sullen-production-calendar.firebaseapp.com",projectId:"sullen-production-calendar",storageBucket:"sullen-production-calendar.firebasestorage.app",messagingSenderId:"661548790602",appId:"1:661548790602:web:d1cc402e5324b967b7c7b3"};
+const app2=getApps().length?getApps()[0]:initializeApp(FC2);
+const db2=getFirestore(app2);
+const storage2=getStorage(app2);
+window._fsDb=db2;window._fsDoc=doc;window._fsGetDoc=getDoc;window._fsSetDoc=setDoc;window._fsUpdateDoc=updateDoc;window._cadDb=db2;
+window._fsStorage=storage2;window._fsRef=ref;window._fsUpload=uploadBytes;window._fsGetDL=getDownloadURL;
+</script>
 </body>
 </html>
