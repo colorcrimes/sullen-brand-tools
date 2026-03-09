@@ -336,9 +336,41 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
         <div class="arc-row">
           <div>
             <div class="arc-label">Capsule</div>
-            <select class="arc-input fi-sel" id="arcCapsule" style="height:40px">
-              <option value="">&#8212; None / Unknown</option>
-            </select>
+            <select id="arcCapsule" style="width:100%;background:#1a1a1a;border:1px solid #333;color:#fff;padding:8px 12px;font-family:'Archivo Narrow',sans-serif;font-size:13px;">
+  <option value="">-- Select Capsule --</option>
+  <optgroup label="SEASONAL">
+    <option value="Artist Series">Artist Series</option>
+    <option value="Badge Series">Badge Series</option>
+    <option value="Core Delivery">Core Delivery</option>
+  </optgroup>
+  <optgroup label="CAPSULES">
+    <option value="Traditions">Traditions</option>
+    <option value="Last Rites">Last Rites</option>
+    <option value="Choloha">Choloha</option>
+    <option value="Dark Waters">Dark Waters</option>
+    <option value="Rasta">Rasta</option>
+    <option value="Vices">Vices</option>
+    <option value="Rose">Rose</option>
+    <option value="Cherubs">Cherubs</option>
+    <option value="Easter">Easter</option>
+    <option value="St. Paddy's">St. Paddy&#39;s</option>
+    <option value="Valentine's">Valentine&#39;s</option>
+    <option value="World Skate">World Skate</option>
+    <option value="Father's Day">Father&#39;s Day</option>
+    <option value="Shark Week">Shark Week</option>
+    <option value="Daily Tee">Daily Tee</option>
+    <option value="Inti Tattoo Day">Inti Tattoo Day</option>
+  </optgroup>
+  <optgroup label="ACCOUNTS">
+    <option value="Buckle">Buckle</option>
+  </optgroup>
+  <option value="__add_new__" style="color:#b8963e;font-style:italic;">+ Add New Capsule...</option>
+</select>
+<div id="arcNewCapsuleRow" style="display:none;margin-top:8px;display:none;">
+  <input id="arcNewCapsuleName" type="text" placeholder="New capsule name..."
+    style="width:calc(100% - 90px);background:#111;border:1px solid #555;color:#fff;padding:7px 10px;font-family:'Archivo Narrow',sans-serif;font-size:13px;box-sizing:border-box;">
+  <button onclick="arcConfirmNewCapsule()" style="width:82px;background:#b8963e;color:#000;border:none;padding:7px 10px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;margin-left:6px;">ADD</button>
+</div>
           </div>
           <div>
             <div class="arc-label">Season</div>
@@ -631,16 +663,22 @@ window.downloadCad=function(src,name){
 };
 
 // ââ ARCHIVE MODAL ââ
-function resetArcModal(){
-  arcFiles=[]; editingId=null;
-  document.getElementById('arcPreviews').innerHTML='';
-  document.getElementById('arcName').value='';
-  document.getElementById('arcSeason').value='archive';
-  document.getElementById('arcYear').value='';
-  document.getElementById('arcNotes').value='';
-  document.getElementById('arcStatus').textContent='';
-  document.getElementById('arcSaveBtn').disabled=false;
-  document.querySelectorAll('.atag').forEach(el=>el.classList.remove('active'));
+function resetArcModal() {
+  var batchList = document.getElementById('arcBatchItems');
+  var batchSection = document.getElementById('arcBatchList');
+  var metaSection = document.getElementById('arcMetaSection');
+  var dropSection = document.getElementById('arcDropSection');
+  var progressWrap = document.getElementById('arcProgressWrap');
+  var status = document.getElementById('arcStatus');
+  var fileInput = document.getElementById('arcFileInput');
+  if (batchList) batchList.innerHTML = '';
+  if (batchSection) batchSection.style.display = 'none';
+  if (metaSection) metaSection.style.display = 'none';
+  if (dropSection) dropSection.style.display = 'block';
+  if (progressWrap) progressWrap.style.display = 'none';
+  if (status) status.textContent = '';
+  if (fileInput) fileInput.value = '';
+  window._arcFiles = [];
 }
   // ── ARCHIVE MODAL ──
   
@@ -852,6 +890,28 @@ function resetArcModal(){
     e.preventDefault();dz.classList.remove('drag-over');
     window.onArcFiles({target:{files:e.dataTransfer.files}});
   });
+
+  // Handle "+ Add New Capsule..." option
+  document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'arcCapsule') {
+      var row = document.getElementById('arcNewCapsuleRow');
+      if (row) row.style.display = e.target.value === '__add_new__' ? 'block' : 'none';
+    }
+  });
+  window.arcConfirmNewCapsule = function() {
+    var inp = document.getElementById('arcNewCapsuleName');
+    var sel = document.getElementById('arcCapsule');
+    if (!inp || !sel) return;
+    var name = inp.value.trim();
+    if (!name) return;
+    // Add to select and select it
+    var opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.insertBefore(opt, sel.querySelector('option[value="__add_new__"]'));
+    sel.value = name;
+    document.getElementById('arcNewCapsuleRow').style.display = 'none';
+    inp.value = '';
+  };
 </script>
 </body>
 </html>
