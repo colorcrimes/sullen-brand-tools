@@ -643,29 +643,8 @@ function resetArcModal(){
   document.querySelectorAll('.atag').forEach(el=>el.classList.remove('active'));
 }
   // ── ARCHIVE MODAL ──
-  function resetArcModal(){
-    arcFiles=[];
-    editingId=null;
-    document.getElementById('arcBatchItems').innerHTML='';
-    document.getElementById('arcBatchList').style.display='none';
-    document.getElementById('arcMetaSection').style.display='none';
-    document.getElementById('arcProgressWrap').style.display='none';
-    document.getElementById('arcProgressBar').style.width='0%';
-    document.getElementById('arcProgressLabel').textContent='';
-    document.getElementById('arcSeason').value='archive';
-    document.getElementById('arcYear').value='';
-    document.getElementById('arcNotes').value='';
-    document.getElementById('arcStatus').textContent='';
-    document.getElementById('arcSaveBtn').disabled=false;
-    document.getElementById('arcSaveBtn').textContent='UPLOAD';
-    document.querySelectorAll('.atag').forEach(el=>el.classList.remove('active'));
-    // Populate capsule dropdown from live capsules data
-    const capSel=document.getElementById('arcCapsule');
-    capSel.innerHTML='<option value="">\u2014 None / Unknown</option>';
-    capsules.filter(c=>c.type!=='basic').forEach(c=>{
-      const o=document.createElement('option'); o.value=c.id; o.textContent=c.name; capSel.appendChild(o);
-    });
-  }
+  
+
 
   window.openArchiveModal=function(){
     resetArcModal();
