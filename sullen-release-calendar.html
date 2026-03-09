@@ -1201,7 +1201,7 @@ if (localStorage.getItem('sullen_auth') === '1') {
 </div>
 
 <div class="ctx hidden" id="ctxMenu">
-  <div class="ctx-item" onclick="ctxDo('view')">ð View Details</div>
+  <div class="ctx-item" onclick="ctxDo('view')">👁 View Details</div>
   <div class="ctx-item" onclick="ctxDo('edit')">— Edit Name</div>
   <div class="ctx-div"></div>
   <div class="ctx-item danger" onclick="ctxDo('remove')">— Remove</div>
@@ -1215,7 +1215,7 @@ if (localStorage.getItem('sullen_auth') === '1') {
     <!-- LEFT: Image -->
     <div class="detail-img-side">
       <img id="detail-img" src="" alt="" style="display:none">
-      <div class="detail-img-placeholder" id="detail-placeholder">ð</div>
+      <div class="detail-img-placeholder" id="detail-placeholder">👕</div>
     </div>
 
     <!-- RIGHT: Info -->
@@ -1236,15 +1236,15 @@ if (localStorage.getItem('sullen_auth') === '1') {
           <div class="detail-section-title">Creative Assets</div>
           <div class="detail-check-grid">
             <div class="detail-check" id="dc-video">
-              <div class="detail-check-icon">ð¬</div>
+              <div class="detail-check-icon">🎬</div>
               <div class="detail-check-label">Video</div>
             </div>
             <div class="detail-check" id="dc-studio">
-              <div class="detail-check-icon">ð¸</div>
+              <div class="detail-check-icon">📸</div>
               <div class="detail-check-label">Studio Shot</div>
             </div>
             <div class="detail-check" id="dc-lifestyle">
-              <div class="detail-check-icon">ð</div>
+              <div class="detail-check-icon">🏄</div>
               <div class="detail-check-label">Lifestyle</div>
             </div>
           </div>
@@ -1303,7 +1303,7 @@ if (localStorage.getItem('sullen_auth') === '1') {
         <!-- Studio Images -->
         <div class="asset-section">
           <div class="asset-section-hdr">
-            <div class="asset-section-title">ð¸ Studio Images</div>
+            <div class="asset-section-title">📸 Studio Images</div>
             <button class="asset-add-btn" onclick="openAssetUpload('studio')">+ Add</button>
           </div>
           <div class="asset-grid" id="ag-studio"></div>
@@ -1312,7 +1312,7 @@ if (localStorage.getItem('sullen_auth') === '1') {
         <!-- Lifestyle Images -->
         <div class="asset-section">
           <div class="asset-section-hdr">
-            <div class="asset-section-title">ð Lifestyle Images</div>
+            <div class="asset-section-title">🏄 Lifestyle Images</div>
             <button class="asset-add-btn" onclick="openAssetUpload('lifestyle')">+ Add</button>
           </div>
           <div class="asset-grid" id="ag-lifestyle"></div>
@@ -1321,7 +1321,7 @@ if (localStorage.getItem('sullen_auth') === '1') {
         <!-- Campaign / Editorial -->
         <div class="asset-section">
           <div class="asset-section-hdr">
-            <div class="asset-section-title">ð¯ Campaign / Editorial</div>
+            <div class="asset-section-title">🎯 Campaign / Editorial</div>
             <button class="asset-add-btn" onclick="openAssetUpload('campaign')">+ Add</button>
           </div>
           <div class="asset-grid" id="ag-campaign"></div>
@@ -1330,7 +1330,7 @@ if (localStorage.getItem('sullen_auth') === '1') {
         <!-- Video / Reels Links -->
         <div class="asset-section">
           <div class="asset-section-hdr">
-            <div class="asset-section-title">ð¬ Video & Reels Links</div>
+            <div class="asset-section-title">🎬 Video & Reels Links</div>
             <button class="asset-add-btn" onclick="openVideoModal()">+ Add Link</button>
           </div>
           <div class="video-link-list" id="vl-list"></div>
@@ -1390,7 +1390,7 @@ if (localStorage.getItem('sullen_auth') === '1') {
     <div class="modal-body">
       <div class="drop-zone" id="assetDzone">
         <input type="file" accept="image/*" multiple onchange="onAssetFileSelect(event)">
-        <div class="dz-icon">ð¼</div>
+        <div class="dz-icon">🖼</div>
         <div class="dz-txt">Drop images here or click to browse</div>
         <div class="dz-sub">JPG, PNG, WEBP</div>
       </div>
@@ -1415,21 +1415,21 @@ if (localStorage.getItem('sullen_auth') === '1') {
     </div>
     <div class="modal-body">
 
-      <div class="lc-section-hdr">ð¸ Creative Assets</div>
+      <div class="lc-section-hdr">📸 Creative Assets</div>
       <div class="lc-toggle-row">
-        <span class="lc-toggle-label">ð¬ Video</span>
+        <span class="lc-toggle-label">🎬 Video</span>
         <div class="lc-toggle" id="lc-video" onclick="lcToggle('video')"></div>
       </div>
       <div class="lc-toggle-row">
-        <span class="lc-toggle-label">ð¸ Studio Shot</span>
+        <span class="lc-toggle-label">📸 Studio Shot</span>
         <div class="lc-toggle" id="lc-studio" onclick="lcToggle('studio')"></div>
       </div>
       <div class="lc-toggle-row">
-        <span class="lc-toggle-label">ð Lifestyle Photos</span>
+        <span class="lc-toggle-label">🏄 Lifestyle Photos</span>
         <div class="lc-toggle" id="lc-lifestyle" onclick="lcToggle('lifestyle')"></div>
       </div>
 
-      <div class="lc-section-hdr">ð­ Production</div>
+      <div class="lc-section-hdr">🏭 Production</div>
       <div class="fg" style="margin-bottom:10px">
         <label class="fl">Stage</label>
         <select class="fi" id="lc-stage" style="background:#0d0d0d">
@@ -1450,11 +1450,11 @@ if (localStorage.getItem('sullen_auth') === '1') {
         </div>
       </div>
 
-      <div class="lc-section-hdr">ð Sales Performance</div>
+      <div class="lc-section-hdr">📊 Sales Performance</div>
       <div style="display:flex;gap:8px">
-        <button class="lc-sales-btn" id="lc-sales-hot"  onclick="lcSales('hot')" >ð¥ Hot</button>
+        <button class="lc-sales-btn" id="lc-sales-hot"  onclick="lcSales('hot')" >🔥 Hot</button>
         <button class="lc-sales-btn" id="lc-sales-neu"  onclick="lcSales('neu')" >— Neutral</button>
-        <button class="lc-sales-btn" id="lc-sales-cold" onclick="lcSales('cold')">—ï¸ Cold</button>
+        <button class="lc-sales-btn" id="lc-sales-cold" onclick="lcSales('cold')">❄️ Cold</button>
       </div>
 
     </div>
@@ -1719,14 +1719,14 @@ function initEvents() {
   const tradThu = janThus.find(d => d.getDate() >= 15) || janThus[1];
   S.events[dk(tradThu)] = { capId:'traditions', label:'TRADITIONS DROP', sublabel:'American Traditional Launch', color:'#f5c518' };
   const valThu = janThus[janThus.length - 1];
-  S.events[dk(valThu)] = { capId:'valentines', label:"VALENTINE'S DROP", sublabel:'ð Free Card Promo Launches', color:'#e91e8c' };
+  S.events[dk(valThu)] = { capId:'valentines', label:"VALENTINE'S DROP", sublabel:'🃏 Free Card Promo Launches', color:'#e91e8c' };
 
   // —— FEBRUARY ——
   const febThus = getThursdays(y, 1);
   if (febThus[0]) S.events[dk(febThus[0])] = { capId:'rose',      label:'ROSE DROP',       sublabel:'Week 1 — Rose capsule',          color:'#ff6b9d' };
   if (febThus[2]) S.events[dk(febThus[2])] = { capId:'cherubs',   label:'CHERUBS DROP',    sublabel:'Week 3 — Cherubs capsule',       color:'#ffb3c6' };
   const stPThu = febThus[febThus.length - 1];
-  S.events[dk(stPThu)] = { capId:'st-paddys', label:"ST. PADDY'S", sublabel:"—ï¸ St. Patrick's Day capsule", color:'#2db84b' };
+  S.events[dk(stPThu)] = { capId:'st-paddys', label:"ST. PADDY'S", sublabel:"☘️ St. Patrick's Day capsule", color:'#2db84b' };
 
   // —— FEBRUARY TUESDAY: Angels capsule (3rd Tue of Feb) ——
   const febTues = getTuesdays(y, 1);
@@ -1742,9 +1742,9 @@ function initEvents() {
     const d = new Date(y, 2, day);
     S.events[dk(d)] = { capId:'badge-series', label:`BADGE DAY ${day}`, sublabel:`Badge Tee #${day} of 8`, color:'#ff8c00', isBadge:true };
   }
-  if (marThus[1]) S.events[dk(marThus[1])] = { capId:'skate-day',   label:'WORLD SKATE DAY', sublabel:'ð¹ World Skateboarding Day Tee', color:'#00bcd4' };
+  if (marThus[1]) S.events[dk(marThus[1])] = { capId:'skate-day',   label:'WORLD SKATE DAY', sublabel:'🛹 World Skateboarding Day Tee', color:'#00bcd4' };
   const lastMarThu = marThus[marThus.length - 1];
-  S.events[dk(lastMarThu)] = { capId:'easter', label:'EASTER DROP', sublabel:'ð£ Easter tees', color:'#b39ddb',
+  S.events[dk(lastMarThu)] = { capId:'easter', label:'EASTER DROP', sublabel:'🐣 Easter tees', color:'#b39ddb',
     secondary: { capId:'artist-pack', label:'ARTIST PACK', sublabel:'Small artist series pack', color:'#f5c518' }
   };
 
@@ -1770,7 +1770,7 @@ function initEvents() {
   const sepThus = getThursdays(y, 8);
   if (sepThus[1]) S.events[dk(sepThus[1])] = { capId:'reapers', label:'REAPERS DROP', sublabel:'Reapers capsule launch — Wk2', color:'#9e1a1a' };
   const lastSepThu = sepThus[sepThus.length - 1];
-  S.events[dk(lastSepThu)] = { capId:'pirate-day', label:'PIRATE DAY', sublabel:'ð´—— ï¸ International Pirate Day', color:'#2db84b' };
+  S.events[dk(lastSepThu)] = { capId:'pirate-day', label:'PIRATE DAY', sublabel:'🏴—— ️ International Pirate Day', color:'#2db84b' };
 
   // —— OCTOBER ——
   const octThus = getThursdays(y, 9);
@@ -2051,7 +2051,7 @@ function renderArtistSection(tuesdays) {
         <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;gap:4px">
           <div>
             <div class="day-date is-tue" style="${isCapsule?`color:${capColor}`:''}">
-              ${isCapsule ? '—¬¡' : 'ð¨'} Tue ${fmt(d)}
+              ${isCapsule ? '—¬¡' : '🎨'} Tue ${fmt(d)}
             </div>
             ${isCapsule ? `<div style="font-family:var(--font-d);font-size:13px;letter-spacing:1.5px;color:${capColor};line-height:1.1;margin-top:1px">${capName}</div>` : ''}
           </div>
@@ -2324,34 +2324,34 @@ function renderCustomDatesSection(meta) {
 // Categories per season group — months 0—3 = spring, 4—7 = summer, 8—9 = fall, 10—11 = holiday
 const ACC_CATEGORIES = {
   spring: [
-    { id:'hats-sp',    name:'Hats',      icon:'ð§¢', color:'#a0522d' },
-    { id:'boxers-sp',  name:'Boxers',    icon:'ð©²', color:'#5b8dd9' },
-    { id:'tanks-sp',   name:'Tanks',     icon:'ð', color:'#888' },
-    { id:'swimwear',   name:'Swimwear',  icon:'ð©±', color:'#00838f' },
-    { id:'lanyards-sp',name:'Lanyards',  icon:'ð·', color:'#9c6ade' },
+    { id:'hats-sp',    name:'Hats',      icon:'🧢', color:'#a0522d' },
+    { id:'boxers-sp',  name:'Boxers',    icon:'🩲', color:'#5b8dd9' },
+    { id:'tanks-sp',   name:'Tanks',     icon:'👕', color:'#888' },
+    { id:'swimwear',   name:'Swimwear',  icon:'🩱', color:'#00838f' },
+    { id:'lanyards-sp',name:'Lanyards',  icon:'🏷', color:'#9c6ade' },
   ],
   summer: [
-    { id:'hats-su',    name:'Hats',      icon:'ð§¢', color:'#a0522d' },
-    { id:'boxers-su',  name:'Boxers',    icon:'ð©²', color:'#5b8dd9' },
-    { id:'tanks-su',   name:'Tanks',     icon:'ð', color:'#888' },
-    { id:'swimwear-su',name:'Swimwear',  icon:'ð©±', color:'#00838f' },
-    { id:'lanyards-su',name:'Lanyards',  icon:'ð·', color:'#9c6ade' },
+    { id:'hats-su',    name:'Hats',      icon:'🧢', color:'#a0522d' },
+    { id:'boxers-su',  name:'Boxers',    icon:'🩲', color:'#5b8dd9' },
+    { id:'tanks-su',   name:'Tanks',     icon:'👕', color:'#888' },
+    { id:'swimwear-su',name:'Swimwear',  icon:'🩱', color:'#00838f' },
+    { id:'lanyards-su',name:'Lanyards',  icon:'🏷', color:'#9c6ade' },
   ],
   fall: [
-    { id:'hats-fa',    name:'Hats',      icon:'ð§¢', color:'#a0522d' },
-    { id:'boxers-fa',  name:'Boxers',    icon:'ð©²', color:'#5b8dd9' },
-    { id:'lanyards-fa',name:'Lanyards',  icon:'ð·', color:'#9c6ade' },
-    { id:'fleece',     name:'Fleece',    icon:'ð§¥', color:'#6d4c41' },
-    { id:'bottoms',    name:'Bottoms',   icon:'ð', color:'#546e7a' },
-    { id:'outerwear',  name:'Outerwear', icon:'ð§£', color:'#37474f' },
+    { id:'hats-fa',    name:'Hats',      icon:'🧢', color:'#a0522d' },
+    { id:'boxers-fa',  name:'Boxers',    icon:'🩲', color:'#5b8dd9' },
+    { id:'lanyards-fa',name:'Lanyards',  icon:'🏷', color:'#9c6ade' },
+    { id:'fleece',     name:'Fleece',    icon:'🧥', color:'#6d4c41' },
+    { id:'bottoms',    name:'Bottoms',   icon:'👖', color:'#546e7a' },
+    { id:'outerwear',  name:'Outerwear', icon:'🧣', color:'#37474f' },
   ],
   holiday: [
-    { id:'hats-ho',    name:'Hats',      icon:'ð§¢', color:'#a0522d' },
-    { id:'boxers-ho',  name:'Boxers',    icon:'ð©²', color:'#5b8dd9' },
-    { id:'lanyards-ho',name:'Lanyards',  icon:'ð·', color:'#9c6ade' },
-    { id:'fleece-ho',  name:'Fleece',    icon:'ð§¥', color:'#6d4c41' },
-    { id:'bottoms-ho', name:'Bottoms',   icon:'ð', color:'#546e7a' },
-    { id:'outerwear-ho',name:'Outerwear',icon:'ð§£', color:'#37474f' },
+    { id:'hats-ho',    name:'Hats',      icon:'🧢', color:'#a0522d' },
+    { id:'boxers-ho',  name:'Boxers',    icon:'🩲', color:'#5b8dd9' },
+    { id:'lanyards-ho',name:'Lanyards',  icon:'🏷', color:'#9c6ade' },
+    { id:'fleece-ho',  name:'Fleece',    icon:'🧥', color:'#6d4c41' },
+    { id:'bottoms-ho', name:'Bottoms',   icon:'👖', color:'#546e7a' },
+    { id:'outerwear-ho',name:'Outerwear',icon:'🧣', color:'#37474f' },
   ],
 };
 
@@ -2467,7 +2467,7 @@ function cadStripHTML(p, key) {
   const stage = lc.stage || 'pre';
   const stageLabels = { pre:'PRE', sample:'SMPL', prod:'PROD', inv:'IN HOUSE' };
   const stageCols   = { pre:'#444', sample:'#ff9800', prod:'#42a5f5', inv:'#4caf50' };
-  const salesIcon   = { hot:'ð¥', cold:'—ï¸', neu:'—' }[lc.sales || 'neu'];
+  const salesIcon   = { hot:'🔥', cold:'❄️', neu:'—' }[lc.sales || 'neu'];
 
   // 3 status dots: video, studio, lifestyle
   const dots = ['video','studio','lifestyle'].map(k =>
@@ -2476,7 +2476,7 @@ function cadStripHTML(p, key) {
 
   const img = p.src
     ? `<img class="cad-strip-img" src="${p.src}" alt="${p.name}" draggable="false">`
-    : `<div class="cad-strip-placeholder">${p.type==='artist'?'ð¨':p.type==='accessory'?'ð¦':'ð'}</div>`;
+    : `<div class="cad-strip-placeholder">${p.type==='artist'?'🎨':p.type==='accessory'?'📦':'👕'}</div>`;
 
   const unitsStr = (lc.ordered != null)
     ? `${lc.received ?? 0}/${lc.ordered}`
@@ -2506,9 +2506,9 @@ function thumbHTML(p, key) {
   const assetCount = (assets.studio||[]).length + (assets.lifestyle||[]).length + (assets.campaign||[]).length + (assets.videos||[]).length;
   // —— Photo checklist icons
   const icons = [
-    { key:'video',     icon:'ð¬', label:'Video' },
-    { key:'studio',    icon:'ð¸', label:'Studio Shot' },
-    { key:'lifestyle', icon:'ð', label:'Lifestyle Photos' },
+    { key:'video',     icon:'🎬', label:'Video' },
+    { key:'studio',    icon:'📸', label:'Studio Shot' },
+    { key:'lifestyle', icon:'🏄', label:'Lifestyle Photos' },
   ];
   const iconRow = icons.map(i =>
     `<span class="lc-icon ${lc[i.key] ? 'active' : ''}" title="${i.label}">${i.icon}</span>`
@@ -2533,7 +2533,7 @@ function thumbHTML(p, key) {
     </div>`;
 
   // —— Sales performance
-  const salesMap = { hot:'ð¥', cold:'—ï¸', neu:'—' };
+  const salesMap = { hot:'🔥', cold:'❄️', neu:'—' };
   const salesCls = { hot:'lc-sales-hot', cold:'lc-sales-cold', neu:'lc-sales-neu' };
   const sales = lc.sales || 'neu';
   const salesHTML = `<span class="${salesCls[sales]}" title="Sales: ${sales}">${salesMap[sales]}</span>`;
@@ -2545,7 +2545,7 @@ function thumbHTML(p, key) {
 
   const img = p.src
     ? `<img src="${p.src}" alt="${p.name}" draggable="false" onclick="openDetail('${key}','${p.id}')" style="cursor:zoom-in">`
-    : `<div class="pt-placeholder" onclick="openDetail('${key}','${p.id}')" style="cursor:zoom-in">${p.type==='artist'?'ð¨':p.type==='accessory'?'ð¦':p.type==='basic'?'ð¦':'ð'}</div>`;
+    : `<div class="pt-placeholder" onclick="openDetail('${key}','${p.id}')" style="cursor:zoom-in">${p.type==='artist'?'🎨':p.type==='accessory'?'📦':p.type==='basic'?'📦':'👕'}</div>`;
 
   return `
     <div class="product-thumb" draggable="true"
@@ -2567,7 +2567,7 @@ function thumbHTML(p, key) {
 
       <button class="lc-edit-btn" onclick="openLcModal('${key}','${p.id}')">— Update Status</button>
       <button class="asset-folder-btn ${assetCount > 0 ? 'has-assets' : ''}" onclick="openDetailAssets('${key}','${p.id}')">
-        ð Assets <span class="af-count">${assetCount > 0 ? assetCount : '0'}</span>
+        📁 Assets <span class="af-count">${assetCount > 0 ? assetCount : '0'}</span>
       </button>
       <button class="pt-remove" onclick="removeProduct('${key}','${p.id}')">—</button>
     </div>
@@ -2772,7 +2772,7 @@ function openDetail(key, pid) {
   const ph  = document.getElementById('detail-placeholder');
   if (p.src) { img.src = p.src; img.style.display = 'block'; ph.style.display = 'none'; }
   else        { img.style.display = 'none'; ph.style.display = 'block';
-                ph.textContent = p.type === 'artist' ? 'ð¨' : p.type === 'accessory' ? 'ð¦' : 'ð'; }
+                ph.textContent = p.type === 'artist' ? '🎨' : p.type === 'accessory' ? '📦' : '👕'; }
 
   // Name + capsule tag
   document.getElementById('detail-name').textContent = p.name;
@@ -2819,8 +2819,8 @@ function openDetail(key, pid) {
 
   // Sales
   const salesData = {
-    hot:  { icon:'ð¥', text:'HOT',     color:'#ff5722' },
-    cold: { icon:'—ï¸', text:'COLD',    color:'#42a5f5' },
+    hot:  { icon:'🔥', text:'HOT',     color:'#ff5722' },
+    cold: { icon:'❄️', text:'COLD',    color:'#42a5f5' },
     neu:  { icon:'—',  text:'NEUTRAL', color:'#555'    },
   };
   const sd = salesData[lc.sales || 'neu'];
@@ -2896,7 +2896,7 @@ function renderAssetPanel() {
   } else {
     vl.innerHTML = videos.map((v, i) => `
       <div class="video-link-item">
-        <span class="video-link-icon">ð¬</span>
+        <span class="video-link-icon">🎬</span>
         <span class="video-link-text">${v.label || v.url}</span>
         <button class="video-link-open" onclick="window.open('${v.url}','_blank')">Open —</button>
         <button class="video-link-rm" onclick="removeVideo(${i})">—</button>
