@@ -582,11 +582,11 @@ window.applyFilters=function(){
     return true;
   });
   filtered.sort((a,b)=>(b.date||0)-(a.date||0));
-  renderGrid();
+  window.renderGrid();
 };
 
 // ── RENDER GRID ──
-function renderGrid(){
+window.renderGrid=function window.renderGrid(){
   const grid=document.getElementById('grid');
   document.getElementById('loadingState').style.display='none';
   document.getElementById('resultCount').textContent=filtered.length+' CADS';
