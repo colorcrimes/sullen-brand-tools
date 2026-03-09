@@ -587,24 +587,22 @@ window.applyFilters=function(){
 
 // ── RENDER GRID ──
 function renderGrid(){
-  const grid = document.getElementById('grid');
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('resultCount').textContent = filtered.length + ' CAD' + (filtered.length !== 1 ? 'S' : '');
-  if (!filtered.length) {
-    document.getElementById('emptyState').style.display = 'block';
-    grid.innerHTML = '';
-    return;
-  }
-  document.getElementById('emptyState').style.display = 'none';
-  const DOWn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const ds = function(d){ return d && d.getFullYear && d.getFullYear() > 2000 ? DOWn[d.getDay()] + ' ' + d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''; };
-  const cc = function(item){ return item.cap ? item.cap.color : (item.source === 'archive' ? '#9c27b0' : '#555'); };
-  grid.innerHTML = filtered.map(function(item, i){
-    const badge = item.source === 'archive' ? '<span class="src-badge arc">Archive</span>' : '<span class="src-badge cal">Calendar</span>';
-    const capTxt = item.source === 'archive' ? (item.notes||'Archive') : (item.cap ? item.cap.name : (item.capId||''));
-    const dateTxt = ds(item.date) + (item.year ? ' · ' + item.year : '');
-    const tagHtml = (item.tags && item.tags.length) ? item.tags.slice(0,3).map(function(t){ return '<span class="tag">'+t+'</span>'; }).join('') : '';
-    return '<div class="card" onclick="window.openLightbox('+i+')"><div class="card-img"><img src="'+item.src+'" alt="'+item.name+'" loading="lazy">'+badge+'</div><div class="card-body"><div class="card-title">'+item.name+'</div><div class="card-cap" style="color:'+cc(item)+'">'+capTxt+'</div><div class="card-meta">'+dateTxt+'</div><div class="card-tags">'+tagHtml+'</div></div></div>';
+  const grid=document.getElementById('grid');
+  document.getElementById('loadingState').style.display='none';
+  document.getElementById('resultCount').textContent=filtered.length+' CADS';
+  if(!filtered.length){document.getElementById('emptyState').style.display='block';grid.innerHTML='';return;}
+  document.getElementById('emptyState').style.display='none';
+  const DOWn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const ds=d=>d&&d.getFullYear&&d.getFullYear()>2000?DOWn[d.getDay()]+' '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+  const cc=item=>item.cap?item.cap.color:(item.source==='archive'?'#9c27b0':'#555');
+  grid.innerHTML=filtered.map((item,i)=>{
+    const cap=item.source==='archive'?(item.notes||'Archive'):(item.cap?item.cap.name:(item.capId||''));
+    const dt=ds(item.date)+(item.year?' · '+item.year:'');
+    const tags=(item.tags&&item.tags.length)?item.tags.slice(0,3).map(t=>'<span class="tag">'+t+'</span>').join(''):'';
+    const srcBadge=item.source==='archive'?'<span style="position:absolute;top:6px;left:6px;background:#9c27b0;color:#fff;font-size:9px;padding:2px 5px;font-family:var(--font-d)">ARCHIVE</span>':'';
+    const dlBtn='<button class="dl" onclick="event.stopPropagation();window.downloadCad&&window.downloadCad(''+item.src+'',''+item.name+'')">DL</button>';
+    const edBtn=(item.source==='archive'&&isAdmin)?'<button class="ed" onclick="event.stopPropagation();window.openLightbox('+i+');setTimeout(()=>window.editCurrentArchive&&window.editCurrentArchive(),50)">EDIT</button>':'';
+    return '<div class="cad-card" onclick="window.openLightbox('+i+')" style="position:relative"><img class="card-img" src="'+item.src+'" alt="'+item.name+'" loading="lazy">'+srcBadge+'<div class="card-overlay">'+dlBtn+edBtn+'</div><div class="card-info"><div class="card-name">'+item.name+'</div><div class="card-cap" style="color:'+cc(item)+'">'+cap+'</div><div class="card-date">'+dt+'</div><div class="card-tags">'+tags+'</div></div></div>';
   }).join('');
 }
 
