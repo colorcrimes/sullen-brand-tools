@@ -612,6 +612,15 @@ function renderGrid(){
 
 
 <script>
+
+window.openArchiveModal=function(){
+  window.resetArcModal&&window.resetArcModal();
+  document.getElementById('archiveOverlay').classList.add('open');
+};
+window.closeArchiveModal=function(e){
+  if(!e||e.target===document.getElementById('archiveOverlay'))
+    document.getElementById('archiveOverlay').classList.remove('open');
+};
 window.cancelLbEdit=function(){
   var p=document.getElementById('lbEditPanel'),
       dl=document.getElementById('lbDlBtn'),
