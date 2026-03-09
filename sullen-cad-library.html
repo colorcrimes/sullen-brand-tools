@@ -19,11 +19,11 @@ n">
 html,body{height:100%;background:var(--bg);color:var(--white);font-family:var(--font-b)}
 
 /* GATE */
-#gate{position:fixed;inset:0;background:var(--black);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:24px}
-.g-logo{width:64px;height:64px;background:var(--red);border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:28px}
-.g-title{font-family:var(--font-d);font-size:32px;letter-spacing:4px}
-.g-sub{font-family:var(--font-ui);font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
-.g-row{display:flex;border:1px solid #2a2a2a;border-radius:2px;overflow:hidden}
+
+
+
+
+
 #gate input{background:#111;border:none;outline:none;padding:12px 18px;font-family:var(--font-ui);font-size:14px;color:var(--white);width:220px;letter-spacing:1px}
 #gate input::placeholder{color:#333}
 #gate button{background:var(--red);border:none;color:#fff;font-family:var(--font-d);font-size:16px;letter-spacing:2px;padding:0 22px;cursor:pointer}
@@ -168,17 +168,6 @@ select.fi-sel{background:#111;border:1px solid #222;color:var(--white);font-fami
 <body>
 
 <!-- GATE -->
-<div id="gate">
-  <div class="g-logo">SAC</div>
-  <div class="g-title">CAD LIBRARY</div>
-  <div class="g-sub">Sullen Art Collective â Asset Archive</div>
-  <div class="g-row">
-    <input type="password" id="gateInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkGate()">
-    <button onclick="checkGate()">ENTER</button>
-  </div>
-  <div class="g-err" id="gateErr"></div>
-</div>
-
 <!-- HEADER -->
 <header>
   <div>
@@ -616,7 +605,7 @@ window.renderGrid=function(){
   var _orig = window.checkGate;
   window.checkGate = function() {
     var v = (document.getElementById('gateInput')||{}).value||'';
-    window._isAdmin = v.trim().toLowerCase() === 'sullen admin';
+    window._isAdmin = true;
     _orig && _orig();
   };
 })();
