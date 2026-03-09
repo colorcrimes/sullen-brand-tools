@@ -610,18 +610,191 @@ window.renderGrid=function(){
 
 
 <script>
+// ── ADMIN FLAG ──
+// Wrap checkGate to track admin vs read-only access
+(function() {
+  var _orig = window.checkGate;
+  window.checkGate = function() {
+    var v = (document.getElementById('gateInput')||{}).value||'';
+    window._isAdmin = v.trim().toLowerCase() === 'sullen admin';
+    _orig && _orig();
+  };
+})();
 
-window.openArchiveModal=function(){
-  window.resetArcModal&&window.resetArcModal();
+// ── LIGHTBOX ──
+window.openLightbox = function(idx) {
+  var items = window.filteredItems;
+  if (!items || !items[idx]) return;
+  var item = items[idx];
+  window.activeLbItem = item;
+  var DOWn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var fmt = function(dt) {
+    return dt && dt.getFullYear && dt.getFullYear() > 2000
+      ? DOWn[dt.getDay()] + ' ' + dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '';
+  };
+  document.getElementById('lbImg').src = item.src;
+  document.getElementById('lbName').textContent = item.name;
+  document.getElementById('lbSource').innerHTML = item.source==='archive'
+    ? '<span style="color:#9c27b0">Archive</span>' : '<span style="color:#2db84b">Calendar</span>';
+  var hasCap = item.cap || item.capId;
+  document.getElementById('lbCapRow').style.display = hasCap ? 'flex' : 'none';
+  if (hasCap) {
+    document.getElementById('lbCapDot').style.background = item.cap ? item.cap.color : '#555';
+    document.getElementById('lbCap').textContent = item.cap ? item.cap.name : (item.capId||'');
+  }
+  var hasDate = item.date && item.date.getFullYear && item.date.getFullYear() > 2000;
+  document.getElementById('lbDateRow').style.display = hasDate ? 'flex' : 'none';
+  if (hasDate) {
+    document.getElementById('lbDate').textContent = fmt(item.date);
+    document.getElementById('lbSeason').textContent = (item.season||'').toUpperCase();
+    document.getElementById('lbYear').textContent = item.year||'';
+  }
+  document.getElementById('lbNotesRow').style.display = item.notes ? 'flex' : 'none';
+  document.getElementById('lbNotes').textContent = item.notes||'';
+  var hasTags = item.tags && item.tags.length;
+  document.getElementById('lbTagsRow').style.display = hasTags ? 'flex' : 'none';
+  document.getElementById('lbTags').innerHTML = hasTags
+    ? item.tags.map(function(tg){return '<span class="lb-tag">'+tg+'</span>';}).join('') : '';
+  document.getElementById('lbDlBtn').onclick = function(){ window.downloadCad(item.src, item.name); };
+  var canEdit = item.source === 'archive' && window._isAdmin;
+  document.getElementById('lbEditBtn').style.display = canEdit ? 'inline-block' : 'none';
+  document.getElementById('lbDelBtn').style.display = canEdit ? 'inline-block' : 'none';
+  document.getElementById('lbEditPanel').style.display = 'none';
+  document.getElementById('lightbox').classList.add('open');
+};
+
+window.closeLightbox = function() {
+  document.getElementById('lightbox').classList.remove('open');
+  window.activeLbItem = null;
+};
+
+window.downloadCad = function(src, name) {
+  var a = document.createElement('a');
+  a.href = src; a.target = '_blank';
+  a.download = (name||'cad').replace(/\s+/g,'-').toLowerCase()+'.jpg';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+};
+
+// ── LIGHTBOX EDIT ──
+window.editCurrentArchive = function() {
+  var item = window.activeLbItem;
+  if (!item || item.source !== 'archive') return;
+  var panel = document.getElementById('lbEditPanel');
+  document.getElementById('editName').value = item.name||'';
+  var capSel = document.getElementById('editCapsule');
+  for (var i=0; i<capSel.options.length; i++) {
+    if (capSel.options[i].value === (item.capsule||item.capId||'')) { capSel.selectedIndex=i; break; }
+  }
+  var seaSel = document.getElementById('editSeason');
+  for (var j=0; j<seaSel.options.length; j++) {
+    if (seaSel.options[j].value === (item.season||'')) { seaSel.selectedIndex=j; break; }
+  }
+  document.getElementById('editYear').value = item.year||'';
+  document.getElementById('editNotes').value = item.notes||'';
+  document.querySelectorAll('.edit-tag').forEach(function(el){
+    el.classList.toggle('active', !!(item.tags && item.tags.includes(el.dataset.tag)));
+  });
+  document.getElementById('lbDlBtn').style.display = 'none';
+  document.getElementById('lbEditBtn').style.display = 'none';
+  document.getElementById('lbDelBtn').style.display = 'none';
+  panel.style.display = 'block';
+};
+
+window.cancelLbEdit = function() {
+  document.getElementById('lbEditPanel').style.display = 'none';
+  document.getElementById('lbDlBtn').style.display = 'inline-block';
+  if (window._isAdmin && window.activeLbItem && window.activeLbItem.source==='archive') {
+    document.getElementById('lbEditBtn').style.display = 'inline-block';
+    document.getElementById('lbDelBtn').style.display = 'inline-block';
+  }
+};
+
+window.editConfirmCapsule = function() {
+  var name = (document.getElementById('editNewCapsuleName').value||'').trim();
+  if (!name) return;
+  var sel = document.getElementById('editCapsule');
+  var opt = document.createElement('option');
+  opt.value = name; opt.textContent = name;
+  sel.insertBefore(opt, sel.querySelector('option[value="_new"]'));
+  sel.value = name;
+  document.getElementById('editNewCapsuleRow').style.display = 'none';
+};
+
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'editCapsule') {
+    document.getElementById('editNewCapsuleRow').style.display = e.target.value==='_new' ? 'flex' : 'none';
+  }
+  if (e.target && e.target.id === 'arcCapsule') {
+    document.getElementById('arcNewCapsuleRow').style.display = e.target.value==='_new' ? 'flex' : 'none';
+  }
+});
+
+window.saveLbEdit = async function() {
+  var item = window.activeLbItem;
+  if (!item || item.source !== 'archive') return;
+  var db = window._fsDb, docFn = window._fsDoc, updFn = window._fsUpdateDoc,
+      getFn = window._fsGetDoc, setFn = window._fsSetDoc;
+  if (!db) { alert('DB not ready. Please refresh.'); return; }
+  var btn = document.getElementById('lbSaveBtn');
+  btn.disabled = true;
+  document.getElementById('lbSaveStatus').textContent = 'Saving...';
+  var newName = document.getElementById('editName').value.trim() || item.name;
+  var newCap = document.getElementById('editCapsule').value;
+  if (newCap === '_new') newCap = document.getElementById('editNewCapsuleName').value.trim() || item.capsule;
+  var newSeason = document.getElementById('editSeason').value;
+  var newYear = parseInt(document.getElementById('editYear').value)||item.year;
+  var newNotes = document.getElementById('editNotes').value.trim();
+  var newTags = Array.from(document.querySelectorAll('.edit-tag.active')).map(function(el){return el.dataset.tag;});
+  try {
+    var idxDoc = docFn(db, 'archive', '__index');
+    var snap = await getFn(idxDoc);
+    if (snap.exists()) {
+      var items = (snap.data().items||[]).map(function(it) {
+        if (it.id === item.id) {
+          return Object.assign({}, it, {name:newName, capsule:newCap, season:newSeason, year:newYear, notes:newNotes, tags:newTags});
+        }
+        return it;
+      });
+      await setFn(idxDoc, { items: items });
+      Object.assign(item, {name:newName, capsule:newCap, season:newSeason, year:newYear, notes:newNotes, tags:newTags});
+      document.getElementById('lbSaveStatus').textContent = 'Saved!';
+      setTimeout(window.cancelLbEdit, 800);
+    }
+  } catch(e) {
+    document.getElementById('lbSaveStatus').textContent = 'Error: '+e.message;
+  }
+  btn.disabled = false;
+};
+
+window.deleteCurrentArchive = async function() {
+  var item = window.activeLbItem;
+  if (!item || item.source !== 'archive') return;
+  if (!confirm('Delete "'+item.name+'" from archive?')) return;
+  var db = window._fsDb, docFn = window._fsDoc, getFn = window._fsGetDoc, setFn = window._fsSetDoc;
+  if (!db) { alert('DB not ready'); return; }
+  try {
+    var idxDoc = docFn(db, 'archive', '__index');
+    var snap = await getFn(idxDoc);
+    if (snap.exists()) {
+      var items = (snap.data().items||[]).filter(function(it){ return it.id !== item.id; });
+      await setFn(idxDoc, { items: items });
+    }
+    window.closeLightbox();
+  } catch(e) { alert('Delete failed: '+e.message); }
+};
+
+// ── UPLOAD MODAL ──
+var arcFiles = [];
+
+window.openArchiveModal = function() {
+  window.resetArcModal();
   document.getElementById('archiveOverlay').classList.add('open');
 };
-window.closeArchiveModal=function(e){
-  if(!e||e.target===document.getElementById('archiveOverlay'))
+
+window.closeArchiveModal = function(e) {
+  if (!e || e.target === document.getElementById('archiveOverlay'))
     document.getElementById('archiveOverlay').classList.remove('open');
 };
-
-// ── ARCHIVE UPLOAD ──
-var arcFiles = [];
 
 window.resetArcModal = function() {
   arcFiles = [];
@@ -631,41 +804,30 @@ window.resetArcModal = function() {
   document.getElementById('arcMetaSection').style.display = 'none';
   document.getElementById('arcProgressWrap').style.display = 'none';
   document.getElementById('arcProgressBar').style.width = '0%';
+  document.getElementById('arcProgressLabel').textContent = '';
   document.getElementById('arcStatus').textContent = '';
   document.getElementById('arcSaveBtn').textContent = 'UPLOAD';
   document.getElementById('arcSaveBtn').disabled = false;
   document.getElementById('arcNotes').value = '';
   document.getElementById('arcYear').value = new Date().getFullYear();
-  document.querySelectorAll('.arc-tag.active').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.arc-tag.active').forEach(function(el){ el.classList.remove('active'); });
 };
 
 window.toggleArcTag = function(el) { el.classList.toggle('active'); };
 
 window.arcConfirmNewCapsule = function() {
-  var name = document.getElementById('arcNewCapsuleName').value.trim();
+  var name = (document.getElementById('arcNewCapsuleName').value||'').trim();
   if (!name) return;
   var sel = document.getElementById('arcCapsule');
-  var opt = document.createElement('option');
-  opt.value = name; opt.textContent = name;
+  var opt = document.createElement('option'); opt.value = name; opt.textContent = name;
   sel.insertBefore(opt, sel.querySelector('option[value="_new"]'));
   sel.value = name;
   document.getElementById('arcNewCapsuleRow').style.display = 'none';
 };
 
-document.addEventListener('change', function(e) {
-  if (e.target && e.target.id === 'arcCapsule') {
-    document.getElementById('arcNewCapsuleRow').style.display = e.target.value === '_new' ? 'flex' : 'none';
-  }
-});
-
-function cleanFileName(name) {
-  return name.replace(/[-_]/g,' ').replace(/\.\w+$/, '').replace(/\b\w/g, c => c.toUpperCase()).trim();
-}
-
 window.renderArcBatchList = function() {
-  var el = document.getElementById('arcBatchItems');
-  el.innerHTML = arcFiles.map(function(f, i) {
-    return '<div class="batch-item"><span>' + f.name + '</span><button onclick="window.removeArcFile(' + i + ')">✕</button></div>';
+  document.getElementById('arcBatchItems').innerHTML = arcFiles.map(function(f,i) {
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #222"><span style="font-size:11px;color:#ccc">'+f.displayName+'</span><button onclick="window.removeArcFile('+i+')" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:14px">✕</button></div>';
   }).join('');
   document.getElementById('arcBatchList').style.display = arcFiles.length ? 'block' : 'none';
   document.getElementById('arcMetaSection').style.display = arcFiles.length ? 'block' : 'none';
@@ -680,209 +842,133 @@ window.removeArcFile = function(i) {
   }
 };
 
-function compressImg(dataURL, maxPx, q) {
-  return new Promise(function(res) {
-    var img = new Image();
-    img.onload = function() {
-      var sc = Math.min(1, maxPx / Math.max(img.width, img.height));
-      var c = document.createElement('canvas');
-      c.width = Math.round(img.width * sc);
-      c.height = Math.round(img.height * sc);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      res(c.toDataURL('image/jpeg', q || 0.75));
-    };
-    img.src = dataURL;
-  });
+function _cleanName(fname) {
+  return fname.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ').replace(/\s+/g,' ')
+    .replace(/\b\w/g, function(c){ return c.toUpperCase(); }).trim();
 }
 
-function readFileAsDataURL(f) {
-  return new Promise(function(res, rej) {
-    var r = new FileReader();
-    r.onload = function(e) { res(e.target.result); };
-    r.onerror = rej;
-    r.readAsDataURL(f);
-  });
-}
-
-// Drop zone wiring (run after DOM ready)
-(function() {
-  var dz = document.getElementById('dropZone');
-  var fi = document.getElementById('arcFileInput');
-  if (!dz || !fi) return;
-  dz.addEventListener('click', function() { fi.click(); });
-  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.style.borderColor = '#c0392b'; });
-  dz.addEventListener('dragleave', function() { dz.style.borderColor = ''; });
-  dz.addEventListener('drop', function(e) {
-    e.preventDefault(); dz.style.borderColor = '';
-    handleArcFiles(Array.from(e.dataTransfer.files));
-  });
-  fi.addEventListener('change', function() {
-    handleArcFiles(Array.from(fi.files));
-    fi.value = '';
-  });
-})();
-
-function handleArcFiles(files) {
-  var imgs = files.filter(function(f) { return f.type.startsWith('image/'); });
+function _handleArcFiles(files) {
+  var imgs = files.filter(function(f){ return f.type.startsWith('image/'); });
   if (!imgs.length) return;
-  arcFiles = arcFiles.concat(imgs.map(function(f) {
-    return { file: f, name: cleanFileName(f.name), originalName: f.name };
+  arcFiles = arcFiles.concat(imgs.map(function(f){
+    return { file: f, displayName: _cleanName(f.name), originalName: f.name };
   }));
   document.getElementById('arcDropSection').style.display = 'none';
   window.renderArcBatchList();
 }
 
+function _readAsDataURL(f) {
+  return new Promise(function(res, rej) {
+    var r = new FileReader(); r.onload = function(e){ res(e.target.result); }; r.onerror = rej; r.readAsDataURL(f);
+  });
+}
+
+function _compressImg(dataURL, maxPx, q) {
+  return new Promise(function(res) {
+    var img = new Image();
+    img.onload = function() {
+      var sc = Math.min(1, maxPx / Math.max(img.width||1, img.height||1));
+      var c = document.createElement('canvas');
+      c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', q||0.8));
+    };
+    img.src = dataURL;
+  });
+}
+
+// Wire drop zone after DOM
+document.addEventListener('DOMContentLoaded', function() { _wireDropZone(); });
+if (document.readyState !== 'loading') { setTimeout(_wireDropZone, 100); }
+
+function _wireDropZone() {
+  var dz = document.getElementById('dropZone');
+  var fi = document.getElementById('arcFileInput');
+  if (!dz || !fi || dz._wired) return;
+  dz._wired = true;
+  dz.addEventListener('click', function(){ fi.click(); });
+  dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.opacity='0.7'; });
+  dz.addEventListener('dragleave', function(){ dz.style.opacity=''; });
+  dz.addEventListener('drop', function(e){ e.preventDefault(); dz.style.opacity=''; _handleArcFiles(Array.from(e.dataTransfer.files)); });
+  fi.addEventListener('change', function(){ _handleArcFiles(Array.from(fi.files)); fi.value=''; });
+}
+
 window.saveArchive = async function() {
-  if (!arcFiles.length) { alert('No files selected.'); return; }
-  var db = window._fsDb, storageFn = window._fsStorage, refFn = window._fsRef,
-      uploadFn = window._fsUpload, getDLFn = window._fsGetDL,
-      docFn = window._fsDoc, getFn = window._fsGetDoc, setFn = window._fsSetDoc;
-
-  if (!db) { alert('Firebase not ready. Please refresh.'); return; }
-
+  if (!arcFiles.length) { alert('Select at least one image.'); return; }
+  var db = window._fsDb, docFn = window._fsDoc, getFn = window._fsGetDoc, setFn = window._fsSetDoc,
+      storage = window._fsStorage, refFn = window._fsRef, uploadFn = window._fsUpload, getDLFn = window._fsGetDL;
+  if (!db) { alert('Firebase not ready — please refresh the page.'); return; }
   var btn = document.getElementById('arcSaveBtn');
   btn.disabled = true; btn.textContent = 'UPLOADING...';
   document.getElementById('arcProgressWrap').style.display = 'block';
   document.getElementById('arcStatus').textContent = '';
 
   var capsule = document.getElementById('arcCapsule').value;
-  if (capsule === '_new') capsule = document.getElementById('arcNewCapsuleName').value.trim() || 'Uncategorized';
+  if (capsule === '_new') capsule = (document.getElementById('arcNewCapsuleName').value||'').trim() || 'Misc';
   var season = document.getElementById('arcSeason').value;
-  var year = document.getElementById('arcYear').value || new Date().getFullYear();
+  var year = parseInt(document.getElementById('arcYear').value) || new Date().getFullYear();
   var notes = document.getElementById('arcNotes').value.trim();
   var tags = Array.from(document.querySelectorAll('.arc-tag.active')).map(function(el){ return el.dataset.tag; });
 
-  var uploaded = [];
+  var saved = [];
   for (var i = 0; i < arcFiles.length; i++) {
-    var pct = Math.round((i / arcFiles.length) * 90);
+    var pct = Math.round((i / arcFiles.length) * 85);
     document.getElementById('arcProgressBar').style.width = pct + '%';
-    document.getElementById('arcStatus').textContent = 'Uploading ' + (i+1) + ' of ' + arcFiles.length + '...';
+    document.getElementById('arcProgressLabel').textContent = (i+1)+' / '+arcFiles.length;
+    document.getElementById('arcStatus').textContent = 'Uploading '+arcFiles[i].displayName+'...';
     try {
-      var dataURL = await readFileAsDataURL(arcFiles[i].file);
-      var compressed = await compressImg(dataURL, 1200, 0.82);
-      var blob = await (await fetch(compressed)).blob();
-      var fname = 'archive/' + Date.now() + '_' + arcFiles[i].originalName.replace(/[^a-zA-Z0-9.]/g,'_');
+      var dataURL = await _readAsDataURL(arcFiles[i].file);
+      var compressed = await _compressImg(dataURL, 1400, 0.82);
+      var blob = await fetch(compressed).then(function(r){ return r.blob(); });
+      var fname = 'archive/'+Date.now()+'_'+i+'_'+arcFiles[i].originalName.replace(/[^a-zA-Z0-9._-]/g,'_');
       var url;
-      if (storageFn && refFn && uploadFn && getDLFn) {
-        var storageRef = refFn(storageFn, fname);
-        await uploadFn(storageRef, blob);
-        url = await getDLFn(storageRef);
+      if (storage && refFn && uploadFn && getDLFn) {
+        var storRef = refFn(storage, fname);
+        await uploadFn(storRef, blob);
+        url = await getDLFn(storRef);
       } else {
-        // fallback: base64 store (limited)
-        url = compressed;
+        url = compressed; // fallback
       }
-      uploaded.push({
-        id: 'arc_' + Date.now() + '_' + i,
-        name: arcFiles[i].name,
+      saved.push({
+        id: 'arc_'+Date.now()+'_'+i,
+        name: arcFiles[i].displayName,
         src: url,
         capsule: capsule,
         season: season,
-        year: parseInt(year),
+        year: year,
         notes: notes,
         tags: tags,
-        date: new Date().toISOString(),
+        uploadedAt: new Date().toISOString(),
         source: 'archive'
       });
     } catch(err) {
       console.error('Upload error:', err);
-      document.getElementById('arcStatus').textContent = 'Error on ' + arcFiles[i].name + ': ' + err.message;
+      document.getElementById('arcStatus').textContent = 'Error on '+arcFiles[i].displayName+': '+err.message;
     }
   }
 
-  // Save to Firestore archive/__index
-  if (uploaded.length && docFn && getFn && setFn) {
+  if (saved.length) {
     document.getElementById('arcStatus').textContent = 'Saving to database...';
     try {
-      var idxDoc = docFn(db, 'archive', '__index');
-      var snap = await getFn(idxDoc);
+      var idxRef = docFn(db, 'archive', '__index');
+      var snap = await getFn(idxRef);
       var existing = snap.exists() ? (snap.data().items || []) : [];
-      await setFn(idxDoc, { items: existing.concat(uploaded) });
+      await setFn(idxRef, { items: existing.concat(saved) });
       document.getElementById('arcProgressBar').style.width = '100%';
-      document.getElementById('arcStatus').textContent = uploaded.length + ' CAD' + (uploaded.length>1?'s':'') + ' saved!';
+      document.getElementById('arcStatus').textContent = saved.length+' CAD'+(saved.length>1?'s':'')+' uploaded!';
       btn.textContent = 'DONE ✓';
       setTimeout(function() {
         document.getElementById('archiveOverlay').classList.remove('open');
         window.resetArcModal();
-      }, 1500);
-    } catch(err) {
-      document.getElementById('arcStatus').textContent = 'Save error: ' + err.message;
+      }, 1600);
+    } catch(e) {
+      document.getElementById('arcStatus').textContent = 'Save failed: '+e.message;
       btn.disabled = false; btn.textContent = 'RETRY';
     }
-  } else if (!docFn) {
-    document.getElementById('arcStatus').textContent = 'DB not ready';
+  } else {
+    document.getElementById('arcStatus').textContent = 'Nothing uploaded.';
     btn.disabled = false; btn.textContent = 'UPLOAD';
   }
-};
-
-window.cancelLbEdit=function(){
-  var p=document.getElementById('lbEditPanel'),
-      dl=document.getElementById('lbDlBtn'),
-      ed=document.getElementById('lbEditBtn'),
-      del=document.getElementById('lbDelBtn');
-  if(p)p.style.display='none';
-  if(dl)dl.style.display='';
-  if(ed)ed.style.display='';
-  if(del)del.style.display='';
-};
-
-document.addEventListener('change',function(e){
-  if(e.target && e.target.id==='editCapsule'){
-    var r=document.getElementById('editNewCapsuleRow');
-    if(r) r.style.display = e.target.value==='__add_new__' ? 'block' : 'none';
-  }
-});
-
-window.editConfirmCapsule=function(){
-  var inp=document.getElementById('editNewCapsuleName'),
-      sel=document.getElementById('editCapsule');
-  if(!inp||!sel) return;
-  var nm=inp.value.trim();
-  if(!nm) return;
-  var o=document.createElement('option');
-  o.value=nm; o.textContent=nm;
-  var an=sel.querySelector('[value="__add_new__"]');
-  if(an) sel.insertBefore(o,an); else sel.appendChild(o);
-  sel.value=nm;
-  document.getElementById('editNewCapsuleRow').style.display='none';
-  inp.value='';
-};
-
-window.saveLbEdit=function(){
-  var item=window.activeLbItem;
-  if(!item||!item.id){alert('No item loaded');return;}
-  var status=document.getElementById('lbSaveStatus'),
-      saveBtn=document.getElementById('lbSaveBtn');
-  if(saveBtn){saveBtn.textContent='SAVING...';saveBtn.disabled=true;}
-  var capVal=document.getElementById('editCapsule').value;
-  if(capVal==='__add_new__') capVal=item.cap||'';
-  var tags=[];
-  document.querySelectorAll('.edit-tag:checked').forEach(function(cb){tags.push(cb.value);});
-  var updates={
-    name:document.getElementById('editName').value.trim(),
-    cap:capVal,
-    season:document.getElementById('editSeason').value,
-    year:document.getElementById('editYear').value,
-    date:document.getElementById('editDate').value,
-    notes:document.getElementById('editNotes').value.trim(),
-    tags:tags,
-    updated:new Date().toISOString()
-  };
-  var db=window._fsDb, updFn=window._fsUpdateDoc, docFn=window._fsDoc;
-  if(!db||!updFn||!docFn){
-    if(status){status.textContent='DB NOT READY - RELOAD PAGE';status.style.color='#c0392b';}
-    if(saveBtn){saveBtn.textContent='SAVE CHANGES';saveBtn.disabled=false;}
-    return;
-  }
-  updFn(docFn(db,'cads',item.id),updates).then(function(){
-    Object.assign(window.activeLbItem,updates);
-    if(window.openLightbox) window.openLightbox(window.activeLbItem);
-    if(status){status.textContent='SAVED ✔';status.style.color='#2ecc71';}
-    setTimeout(function(){window.cancelLbEdit();if(status)status.textContent='';},1200);
-  }).catch(function(err){
-    console.error('Save error:',err);
-    if(status){status.textContent='ERROR - CHECK CONSOLE';status.style.color='#c0392b';}
-    if(saveBtn){saveBtn.textContent='SAVE CHANGES';saveBtn.disabled=false;}
-  });
 };
 </script>
 
