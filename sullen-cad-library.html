@@ -598,10 +598,10 @@ function renderGrid(){
   grid.innerHTML=filtered.map((item,i)=>{
     const cap=item.source==='archive'?(item.notes||'Archive'):(item.cap?item.cap.name:(item.capId||''));
     const dt=ds(item.date)+(item.year?' · '+item.year:'');
-    const tags=(item.tags&&item.tags.length)?item.tags.slice(0,3).map(t=>'<span class="tag">'+t+'</span>').join(''):'';
+    const tags=(item.tags&&item.tags.length)?item.tags.slice(0,3).map(tg=>'<span class="tag">'+tg+'</span>').join(''):'';
     const srcBadge=item.source==='archive'?'<span style="position:absolute;top:6px;left:6px;background:#9c27b0;color:#fff;font-size:9px;padding:2px 5px;font-family:var(--font-d)">ARCHIVE</span>':'';
-    const dlBtn='<button class="dl" onclick="event.stopPropagation();window.downloadCad&&window.downloadCad(''+item.src+'',''+item.name+'')">DL</button>';
-    const edBtn=(item.source==='archive'&&isAdmin)?'<button class="ed" onclick="event.stopPropagation();window.openLightbox('+i+');setTimeout(()=>window.editCurrentArchive&&window.editCurrentArchive(),50)">EDIT</button>':'';
+    const dlBtn='<button class="dl" onclick="event.stopPropagation();window.downloadCad&&window.downloadCad(filtered['+i+'].src,filtered['+i+'].name)">DL</button>';
+    const edBtn=(item.source==='archive'&&isAdmin)?'<button class="ed" onclick="event.stopPropagation();window.openLightbox('+i+');setTimeout(()=>window.editCurrentArchive&&window.editCurrentArchive(),80)">EDIT</button>':'';
     return '<div class="cad-card" onclick="window.openLightbox('+i+')" style="position:relative"><img class="card-img" src="'+item.src+'" alt="'+item.name+'" loading="lazy">'+srcBadge+'<div class="card-overlay">'+dlBtn+edBtn+'</div><div class="card-info"><div class="card-name">'+item.name+'</div><div class="card-cap" style="color:'+cc(item)+'">'+cap+'</div><div class="card-date">'+dt+'</div><div class="card-tags">'+tags+'</div></div></div>';
   }).join('');
 }
